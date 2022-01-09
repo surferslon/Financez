@@ -17,10 +17,18 @@
             {{ form.acc_cr }}
             <input id="acc_cr_visible"/>
             {{ form.total }}
-            {{ form.currency }}
             {{ form.comment }}
             <button>{% trans 'Add' %}</button>
         </form>
+    </div>
+
+    <div class="row">
+        <div class="main-book-settings">
+            <input id="date-from" name="date-from" type="date" value={{ date_from }}>
+            <lbael> - </lbael>
+            <input id="date-to" name="date-to" type="date" value={{ date_to }}>
+            <button id="show-entries"> {% trans 'show' %} </button>
+        </div>
     </div>
 
     <div class="row">
@@ -29,8 +37,7 @@
             <div>{% trans 'DR' %}</div>
             <div>{% trans 'CR' %}</div>
             <div style="text-align: right">{% trans 'Sum' %}</div>
-            <div style="text-align: center">{% trans 'Currency' %}</div>
-            <div>{% trans 'Comment' %}</div>
+            <div style="text-align: center">{% trans 'Comment' %}</div>
         </div>
     </div>
 
@@ -41,9 +48,11 @@
                     <div class="main-book-item">{{ entry.date|date:"Y M d"  }}</div>
                     <div class="main-book-item">{{ entry.acc_dr__name }}</div>
                     <div class="main-book-item">{{ entry.acc_cr__name }}</div>
-                    <div class="main-book-item" style="text-align: right">{{ entry.total|floatformat:3 }}</div>
-                    <div class="main-book-item" style="text-align: center">{{ entry.currency__name }}</div>
-                    <div class="main-book-item">{{ entry.comment }}</div>
+                    <div class="main-book-item"
+                        style="text-align: right; {% if entry.acc_cr__results == 'inc' %} color: green; {% endif %}">
+                        {{ entry.total|floatformat:3 }}
+                    </div>
+                    <div class="main-book-item" style="padding-left: 10px">{{ entry.comment }}</div>
                 </div>
             {% endfor %}
         </div>

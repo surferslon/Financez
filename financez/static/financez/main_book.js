@@ -52,4 +52,10 @@ $(function(){
             })
         })
     }
+
+    $('#show-entries').click(function(event){
+        window.location.href =
+            location.protocol + '//' + location.host + location.pathname
+            + '?date-from=' + $('#date-from').val() + '&date-to=' + $('#date-to').val()
+    });
 })

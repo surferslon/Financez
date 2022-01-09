@@ -31,12 +31,17 @@
 
             <div class="results-block">
                 <div class="results-header">{% trans 'Results' %}</div>
-                {% include 'financez/results.html' with qs=results_queryset type=result_types.assets %}
+                <span>{% trans 'Incomes' %}</span>
+                <span style="text-align: right;" id="period_inc">{{ inc_sum|floatformat:3 }}</span>
+                <span>{% trans 'Expenses' %}</span>
+                <span style="text-align: right;" id="period_exp">{{ exp_sum|floatformat:3 }} </span>
+                <span >{% trans 'Result' %}</span>
+                <span style="text-align: right;" id="period_sum">{{ result_sum|floatformat:3 }} </span>
             </div>
 
             <div class="results-block">
-                <div class="results-header">{% trans 'Planning' %}</div>
-                {% include 'financez/results.html' with qs=results_queryset type=result_types.plans %}
+                <div class="results-header">{% trans 'Assets' %}</div>
+                {% include 'financez/results.html' with qs=results_queryset type=result_types.assets %}
             </div>
 
             <div class="results-block">
@@ -45,13 +50,8 @@
             </div>
 
             <div class="results-block">
-                <div class="results-header">{{ current_month|date:"M Y" }}</div>
-                <span>{% trans 'Incomes' %}</span>
-                <span>{{ incomes_sum|floatformat:3 }}</span>
-                <span>{% trans 'Expenses' %}</span>
-                <span>{{ expenses_sum|floatformat:3 }} </span>
-                <span>{% trans 'Result' %}</span>
-                <span>{{ month_result|floatformat:3 }} </span>
+                <div class="results-header">{% trans 'Planning' %}</div>
+                {% include 'financez/results.html' with qs=results_queryset type=result_types.plans %}
             </div>
 
         </div>

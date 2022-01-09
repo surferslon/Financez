@@ -1,7 +1,15 @@
 from django.db import models
-from django.db.models import Sum
 from django.contrib.auth.models import User
+from django.db.models import Sum
 from django.utils.translation import gettext as _
+
+
+def update_balance(acc, currency):
+    balance, new = AccountBalance.objects.get_or_create(acc=acc, currency=currency)
+    incomes = Entry.objects.filter(acc_dr=acc, currency=currency).aggregate(sum=Sum('total'))
+    expenses = Entry.objects.filter(acc_cr=acc, currency=currency).aggregate(sum=Sum('total'))
+    balance.total = (incomes['sum'] or 0) - (expenses['sum'] or 0)
+    balance.save()
 
 
 class Currency(models.Model):
@@ -77,14 +85,7 @@ class Entry(models.Model):
     def __str__(self):
         return f'{self.date} {self.acc_dr} {self.acc_cr} {self.total}'
 
-    def update_balance(self, acc):
-        balance, new = AccountBalance.objects.get_or_create(acc=acc, currency=self.currency)
-        incomes = Entry.objects.filter(acc_dr=acc, currency=self.currency).aggregate(sum=Sum('total'))
-        expenses = Entry.objects.filter(acc_cr=acc, currency=self.currency).aggregate(sum=Sum('total'))
-        balance.total = (incomes['sum'] or 0) - (expenses['sum'] or 0)
-        balance.save()
-
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self.update_balance(self.acc_dr)
-        self.update_balance(self.acc_cr)
+        update_balance(self.acc_dr, self.currency)
+        update_balance(self.acc_cr, self.currency)

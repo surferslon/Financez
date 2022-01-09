@@ -10,6 +10,10 @@ var create_report = function(response) {
     var dataSource = [{}]
     var ExpIndex = response.accounts_incomes.length
 
+   $("#period_inc").text(response.period_inc);
+   $("#period_exp").text(response.period_exp);
+   $("#period_sum").text(response.period_sum);
+
     for (var i=0; i<response.accounts_incomes.length; i++) {
         seriesSource.push({
             valueField: response.accounts_incomes[i],
@@ -74,6 +78,7 @@ var create_report_details = function(response) {
             barPadding: 0.5,
             argumentField: "group_date",
             type: "bar",
+            selectionMode: "allSeriesPoints",
             label: {
                 visible: true,
                 format: {

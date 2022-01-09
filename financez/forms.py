@@ -12,7 +12,7 @@ class NewEntryForm(forms.ModelForm):
 
     class Meta:
         model = Entry
-        fields = ['date', 'acc_dr', 'acc_cr', 'total', 'currency', 'comment']
+        fields = ['date', 'acc_dr', 'acc_cr', 'total', 'comment']
         widgets = {
             'date': DateInput,
         }

@@ -66,9 +66,9 @@ footer {
     border-bottom: 1px solid #dbdbdb;
 }
 .header-menu {
-    width: 70%;
+    width: 75%;
     display: grid;
-    grid-template-columns: 40% 20% 20% 20%;
+    grid-template-columns: 35% 20% 20% 20% 5%;
     font-size: 10pt;
     margin-top: 5px;
 }

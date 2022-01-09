@@ -27,6 +27,39 @@ def change_currency(request):
     return HttpResponse('')
 
 
+def append_missing_dates(results, group, period_from, period_to):
+    iter_date = period_from
+    while iter_date < period_to:
+        if group:
+            group_date = 'Total'
+        else:
+            group_date = f'{iter_date.year}.{iter_date.month}'
+        group_dict = next((item for item in results if item['group_date'] == group_date), None)
+        if not group_dict:
+            results.append({'group_date': group_date})
+        if iter_date.month + 1 > 12:
+            iter_date = iter_date.replace(year=iter_date.year + 1, month=1, day=1)
+        else:
+            iter_date = iter_date.replace(month=iter_date.month + 1, day=1)
+
+    return results
+
+
+def get_period_results(date_from, date_to, user, currency):
+    incomes_sum = Entry.objects.filter(
+        date__gte=date_from, date__lte=date_to, user=user,
+        acc_cr__results=Account.RESULT_INCOMES, currency=currency
+    ).values('total').aggregate(sum=Sum('total'))['sum'] or 0
+    expenses_sum = Entry.objects.filter(
+        date__gte=date_from, date__lte=date_to, user=user,
+        acc_dr__results=Account.RESULT_EXPENSES, currency=currency
+    ).values('total').aggregate(sum=Sum('total'))['sum'] or 0
+    inc_sum = round(incomes_sum, 3)
+    exp_sum = round(expenses_sum, 3)
+    res_sum = round(incomes_sum - expenses_sum, 3)
+    return f'{inc_sum:.3f}', f'{exp_sum:.3f}', f'{res_sum:.3f}'
+
+
 class EntriesView(CreateView):
     model = Entry
     template_name = 'financez/index.html'
@@ -34,13 +67,18 @@ class EntriesView(CreateView):
     success_url = '/entries'
 
     def form_valid(self, form):
-        form.instance.user = self.request.user
+        user = self.request.user
+        form.instance.user = user
+        form.currency = Currency.objects.get(user=user, selected=True)
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = datetime.now()
         user = self.request.user
+        date_from = self.request.GET.get('date-from') or date(today.year, today.month, 1).strftime('%Y-%m-%d')
+        date_to = self.request.GET.get('date-to') or today.strftime('%Y-%m-%d')
+        context['current_cur'] = Currency.objects.get(user=user, selected=True)
         context['result_types'] = {
             'assets': Account.RESULT_ASSETS,
             'debts': Account.RESULT_DEBTS,
@@ -48,7 +86,6 @@ class EntriesView(CreateView):
             'incomes': Account.RESULT_INCOMES,
             'expenses': Account.RESULT_EXPENSES
         }
-        context['form'].fields['currency'].queryset = Currency.objects.filter(user=user)
         try:
             currency = Currency.objects.get(user=user, selected=True)
         except Currency.DoesNotExist:
@@ -58,11 +95,13 @@ class EntriesView(CreateView):
         context['entries'] = (
             Entry.objects
             .order_by('-date')
-            .filter(date__year=today.year, date__month=today.month, currency=currency, user=user)
-            .values('date', 'acc_dr__name', 'acc_cr__name', 'total', 'comment', 'currency__name')
+            .filter(date__gte=date_from, date__lte=date_to, currency=currency, user=user)
+            .values('date', 'acc_dr__name', 'acc_cr__name', 'total', 'comment', 'acc_cr__results')
         )
         # accounts
         context['account_list'] = make_account_tree(user)
+        context['date_from'] = date_from
+        context['date_to'] = date_to
         return context
 
 
@@ -72,11 +111,13 @@ class MainView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(MainView, self).get_context_data(**kwargs)
         today = datetime.now()
-        context['period_from'] = date(today.year, 1, 1).strftime("%Y-%m-%d")
-        context['period_to'] = today.strftime("%Y-%m-%d")
-        context['current_month'] = today
-        # results
         user = self.request.user
+
+        context['period_from'] = date(today.year, 1, 1).strftime('%Y-%m-%d')
+        context['period_to'] = today.strftime('%Y-%m-%d')
+        context['current_month'] = today
+        context['current_cur'] = Currency.objects.get(user=user, selected=True)
+        # results
         try:
             currency = Currency.objects.get(user=user, selected=True)
         except Currency.DoesNotExist:
@@ -92,18 +133,7 @@ class MainView(TemplateView):
             .values('acc__name', 'acc__results', 'total', 'acc__parent__name', 'acc__parent__order')
             .order_by('acc__order')
         )
-        # results by month
-        incomes_sum = Entry.objects.filter(
-            date__year=today.year, date__month=today.month, user=user,
-            acc_cr__results=Account.RESULT_INCOMES, currency=currency
-        ).values('total').aggregate(sum=Sum('total'))['sum'] or 0
-        expenses_sum = Entry.objects.filter(
-            date__year=today.year, date__month=today.month, user=user,
-            acc_dr__results=Account.RESULT_EXPENSES, currency=currency
-        ).values('total').aggregate(sum=Sum('total'))['sum'] or 0
-        context['incomes_sum'] = incomes_sum
-        context['expenses_sum'] = expenses_sum
-        context['month_result'] = incomes_sum - expenses_sum
+
         context['result_types'] = {
             'assets': Account.RESULT_ASSETS,
             'debts': Account.RESULT_DEBTS,
@@ -121,7 +151,8 @@ class ReportDataView(View):
             if group_all:
                 group_date = 'Total'
             else:
-                group_date = f'{entr.date.year}.{entr.date.month}'
+                month = entr.date.strftime('%m')
+                group_date = f'{entr.date.year}.{month}'
             if entr.acc_dr.results == Account.RESULT_EXPENSES:
                 if group_by_parent:
                     acc_name = (
@@ -146,7 +177,7 @@ class ReportDataView(View):
     def get(self, request, *args, **kwargs):
         today = datetime.now()
         group_by_parent = True
-        group_all = True if request.GET.get('group_all') == "true" else False
+        group_all = request.GET.get('group_all') == 'true'
         period_from = request.GET.get('period-from', date(today.year, 1, 1))
         period_to = request.GET.get('period-to', today)
         user = request.user
@@ -189,11 +220,15 @@ class ReportDataView(View):
                 f'exp:{acc["parent__name"]}:{acc["name"]}' for acc in
                 Account.objects.filter(results=Account.RESULT_EXPENSES, user=user).values('name', 'parent__name').distinct()
             ]
+        period_inc, period_exp, period_sum = get_period_results(period_from, period_to, user, currency)
         return JsonResponse(
             {
                 'accounts_incomes': inc_accounts,
                 'accounts_expenses': exp_accounts,
-                'results': results,
+                'results': sorted(results, key=lambda k: k['group_date']),
+                'period_inc': period_inc,
+                'period_exp': period_exp,
+                'period_sum': period_sum
             },
             safe=False
         )
@@ -215,6 +250,7 @@ class ReportDetailsView(View):
             period_from = datetime.strptime(period_from, "%Y-%m-%d")
         if isinstance(period_to, str):
             period_to = datetime.strptime(period_to, "%Y-%m-%d")
+        period_to = period_to.replace(hour=23, minute=59)
         params = {
             'currency': Currency.objects.get(user=request.user, selected=True),
             'user': request.user,
@@ -303,6 +339,7 @@ class SettingsView(TemplateView):
         context = super().get_context_data(**kwargs)
         section = kwargs.get('section')
         user = self.request.user
+        context['current_cur'] = Currency.objects.get(user=user, selected=True)
         if section == 'general':
             context['currencies'] = Currency.objects.filter(user=user)
             context['new_cur_form'] = NewCurForm

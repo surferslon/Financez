@@ -4,11 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = "==3.0"
+Django = "==3.0"
 xlrd = "==1.2.0"
+gunicorn = "*"
 
 [dev-packages]
 ipdb = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.7"
