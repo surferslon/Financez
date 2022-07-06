@@ -2,6 +2,7 @@ from datetime import datetime
 
 import xlrd
 from django.core.management.base import BaseCommand, CommandError
+
 from financez.models import Account, Currency, Entry
 
 
