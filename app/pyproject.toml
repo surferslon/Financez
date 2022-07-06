@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "financez"
+version = "0.1.0"
+description = ""
+authors = ["serge"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+Django = "^4.0.6"
+djangorestframework = "^3.13.1"
+
+[tool.poetry.dev-dependencies]
+ipdb = "^0.13.9"
+pre-commit = "^2.19.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
