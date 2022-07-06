@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+    app:
+        build:
+            context: "app/"
+            dockerfile: dockerfile
+        volumes:
+            - ./app:/usr/app
+            - ./db:/usr/db
+        working_dir: /usr/app
+        command: "poetry run python manage.py runserver"
+        network_mode: "host"
