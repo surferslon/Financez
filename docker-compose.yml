@@ -2,10 +2,19 @@ version: "3.9"
 services:
     app:
         build:
-            context: "app/"
-            dockerfile: dockerfile
+            context: ./app
+            dockerfile: Dockerfile
         volumes:
             - ./db:/usr/db
         working_dir: /usr/app
+        # command: "poetry run gunicorn financez.wsgi"
         command: "poetry run python manage.py runserver"
         network_mode: "host"
+
+    ui:
+        build:
+            context: ./ui
+            dockerfile: 'Dockerfile'
+        ports:
+            - 80:80
+        command: [nginx, '-g', 'daemon off;']
