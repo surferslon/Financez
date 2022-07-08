@@ -5,6 +5,11 @@
     margin: 4px 10px 10px 10px;
     padding-bottom: 10px;
     border: 1px solid #dbdbdb;
+    height: 750px;
+    background-color: white;
+}
+#chart {
+  height: 100%;
 }
 #chart_details {
     height: 400px;

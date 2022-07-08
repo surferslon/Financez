@@ -12,6 +12,7 @@ gunicorn = "^20.1.0"
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.9"
+django-cors-headers = "^3.13.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
