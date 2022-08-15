@@ -220,11 +220,7 @@ class ReportDataView(View):
         group_all = request.GET.get("group_all") == "true"
         period_from = request.GET.get("period-from", date(today.year, 1, 1))
         period_to = request.GET.get("period-to", today)
-        # only for debug purposes!
         user = request.user
-        if not user.id:
-            from django.contrib.auth.models import User
-            user = User.objects.get(username='Sergio')
         try:
             currency = Currency.objects.get(user=user, selected=True)
         except Currency.DoesNotExist:

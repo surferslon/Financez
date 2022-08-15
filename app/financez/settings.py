@@ -9,7 +9,7 @@ SECRET_KEY = "l@6boni%5$tg*dzta%6fellmleoum4g*p-1#q64g3hi-0&1@!n"
 # DEBUG = bool(os.environ['DEBUG'])
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "http://localhost:3000", "http://127.0.0.1:3000"]
 
 
 INSTALLED_APPS = [
@@ -19,17 +19,23 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
+    "rest_framework",
     "financez.apps.FinancezConfig",
-    "registration.apps.RegistrationConfig",
-    'corsheaders',
-    'rest_framework',
+    "registration.apps.RegistrationConfig",  # to be removed
+    "users.apps.UsersConfig",
+    "accounts.apps.AccountsConfig",
+    "entries.apps.EntriesConfig",
+    "currencies.apps.CurrenciesConfig",
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    'corsheaders.middleware.CorsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -37,6 +43,16 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
 
 ROOT_URLCONF = "financez.urls"
 

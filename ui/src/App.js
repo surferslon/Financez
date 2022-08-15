@@ -1,20 +1,50 @@
 import 'devextreme/dist/css/dx.common.css';
 import 'devextreme/dist/css/dx.light.css';
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom'
 import Header from './Components/Header'
 import Reports from './Pages/Reports';
 import Entries from './Pages/Entries';
 import Settings from './Pages/Settings';
+import Login from './Pages/Login'
+
+
+const AppLayout = ({setUser}) => {
+  const loggedInUser = localStorage.getItem("user");
+  useEffect(() => {
+    if (loggedInUser) {
+      setUser(loggedInUser);
+    }
+  }, []);
+  if (!loggedInUser) {
+    return <Navigate to="/login" replace />;
+  }
+  return (
+    <>
+      <Header />
+      <Outlet />
+    </>
+    )
+};
+
+const LoginLayout = () => (
+  <Outlet />
+);
 
 
 function App() {
+  const [user, setUser] = useState(null);
   return (
     <BrowserRouter>
-      <Header />
       <Routes>
-        <Route exact path="/" element={ <Reports /> } />
-        <Route path="/entries/" element={ <Entries /> } />
-        <Route path="/settings/" element={ <Settings /> } />
+        <Route path="/login" element={<LoginLayout />}>
+          <Route path="/login/" element={ <Login setUser={setUser} /> } />
+        </Route>
+        <Route path="/" element={<AppLayout setUser={setUser} /> } >
+          <Route path="/reports/" element={ <Reports /> } />
+          <Route path="/entries/" element={ <Entries /> } />
+          <Route path="/settings/" element={ <Settings /> } />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
