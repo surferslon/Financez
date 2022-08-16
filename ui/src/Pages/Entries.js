@@ -37,10 +37,10 @@ function NewEntryBlock({accList, setEntries}) {
       <div className="row">
         <form className="new-entry-form">
           <input onChange={(e) => setDate(e.target.value)} type="date" />
-          <input onClick={e => handleClick('dr')} value={newDrAcc.name} />
-          <input onClick={e => handleClick('cr')} value={newCrAcc.name} />
-          <input onChange={(e) => setSum(e.target.value)} type="number" step="0.01" value={sum} />
-          <input onChange={(e) => setComment(e.target.value)} value={comment} />
+          <input onClick={e => handleClick('dr')} value={newDrAcc.name} placeholder="Debit" />
+          <input onClick={e => handleClick('cr')} value={newCrAcc.name} placeholder="Credit"/>
+          <input onChange={(e) => setSum(e.target.value)} type="number" step="0.01" value={sum} placeholder="Sum" />
+          <input onChange={(e) => setComment(e.target.value)} value={comment} placeholder="Comment" />
           <button onClick={handleSubmit}>Add</button>
         </form>
       </div>

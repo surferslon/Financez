@@ -49,7 +49,6 @@
 }
 #report_entries {
     height: auto;
-    display: none;
     justify-content: center;
 }
 .reposrt-details-wrapper {

@@ -29,8 +29,16 @@ export function fetchAccounts() {
 }
 
 export function postNewEntry(date, acc_dr, acc_cr, total, comment) {
-    return apiClient.post(
-      '/api/entries/create/', { date, acc_dr, acc_cr, total, comment },
-      {headers: { 'X-CSRFToken': Cookies.get('csrftoken') }}
-    )
+  return apiClient.post(
+    '/api/entries/create/', { date, acc_dr, acc_cr, total, comment },
+    {headers: { 'X-CSRFToken': Cookies.get('csrftoken') }}
+  )
+}
+
+export function fetchAccDetails(acc_id, periodFrom, periodTo) {
+  return apiClient.get(`/api/entries/report_details/${acc_id}?period-from=${periodFrom}&period-to=${periodTo}`)
+}
+
+export function fetchAccEntries(acc_id, month) {
+  return apiClient.get(`/api/entries/report_entries/${acc_id}?month=${month}`)
 }
