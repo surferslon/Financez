@@ -1,9 +1,9 @@
 from datetime import date, datetime
 
 from django.db.models import Sum
-from entries.serializers import EntrySerializer
+from entries.serializers import EntryCreateSerializer, EntrySerializer
 from financez.models import Account, Currency, Entry
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -154,3 +154,13 @@ class EntriesListView(ListAPIView):
             .filter(date__gte=date_from, date__lte=date_to, currency=currency, user=user)
             .values("id", "date", "acc_dr__name", "acc_cr__name", "total", "comment", "acc_cr__results")
         )
+
+
+class EntryCreateView(CreateAPIView):
+    serializer_class = EntryCreateSerializer
+
+    def get_serializer(self, data):
+        user = self.request.user
+        data["user"] = user.id
+        data["currency"] = Currency.objects.get(user=user, selected=True).id
+        return super().get_serializer(data=data)

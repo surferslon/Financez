@@ -31,6 +31,11 @@ INSTALLED_APPS = [
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "http://localhost"]
+
+CSRF_COOKIE_NAME = "csrftoken"
+# CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
+# CSRF_HEADER_NAME = "X-CSRFToken"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

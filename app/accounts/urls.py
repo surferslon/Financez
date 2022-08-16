@@ -4,4 +4,4 @@ from . import views
 
 app_name = "accounts"
 
-urlpatterns = []
+urlpatterns = [path("list/", views.AccountListView().as_view(), name="account_list")]

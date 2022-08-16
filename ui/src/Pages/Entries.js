@@ -1,20 +1,48 @@
 import '../Styles/Entries.css';
 import { useEffect, useState } from 'react';
-import { fetchEntries } from '../Api/Main';
+import { fetchEntries, fetchAccounts, postNewEntry } from '../Api/Main';
+import AccountTreeModal from '../Components/AccountTreeModal';
 
 
-function NewEntryBlock() {
+function NewEntryBlock({accList}) {
+  const [date, setDate] = useState()
+  const [comment, setComment] = useState()
+  const [sum, setSum] = useState()
+  const [newDrAcc, setNewDrAcc] = useState("");
+  const [newCrAcc, setNewCrAcc] = useState("");
+  const [accTreeIsOpen, setAccTreeIsOpen] = useState(false);
+  const [targetAcc, setTargetAcc] = useState('')
+  const handleClick = (targetAcc) => {
+    setTargetAcc(targetAcc);
+    setAccTreeIsOpen(true);
+  }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    postNewEntry(date, newDrAcc.id, newCrAcc.id, sum, comment);
+  }
   return (
-    <div className="row">
-      <form method="POST" className="new-entry-form">
-        <input type="date" />
-        <input />
-        <input />
-        <input type="number" step="0.01"/>
-        <input />
-        <button>Add</button>
-      </form>
-    </div>
+    <>
+
+      <div className="row">
+        <form className="new-entry-form">
+          <input onChange={(e) => setDate(e.target.value)} type="date" />
+          <input onClick={e => handleClick('dr')} value={newDrAcc.name} />
+          <input onClick={e => handleClick('cr')} value={newCrAcc.name} />
+          <input onChange={(e) => setSum(e.target.value)} type="number" step="0.01"/>
+          <input onChange={(e) => setComment(e.target.value)} />
+          <button onClick={handleSubmit}>Add</button>
+        </form>
+      </div>
+
+      {accTreeIsOpen && <AccountTreeModal
+        setAccTreeIsOpen={setAccTreeIsOpen}
+        accList={accList}
+        targetAcc={targetAcc}
+        targetFuncs={{'dr': setNewDrAcc, 'cr': setNewCrAcc}}
+        />
+      }
+
+    </>
   )
 }
 
@@ -36,9 +64,9 @@ function MainBookFilter() {
   return (
       <div className="row">
         <div className="main-book-settings">
-          <input id="date-from" name="date-from" type="date" value="" />
+          <input id="date-from" name="date-from" type="date"  />
           <label> - </label>
-          <input id="date-to" name="date-to" type="date" value="" />
+          <input id="date-to" name="date-to" type="date"  />
           <button id="show-entries"> show </button>
         </div>
       </div>
@@ -49,7 +77,7 @@ function Entry({entry}) {
   const addZeroes = function( num ) {
       var value = Number(num);
       var res = num.toString().split(".");
-      if(res.length == 1 || (res[1].length < 3)) { value = value.toFixed(3); }
+      if(res.length === 1 || (res[1].length < 3)) { value = value.toFixed(3); }
       return value
   }
   return (
@@ -64,16 +92,18 @@ function Entry({entry}) {
 }
 
 export default function Entries() {
-  const [entries, setEntries] = useState([])
+  const [entries, setEntries] = useState([]);
+  const [accList, setAccList] = useState([]);
 
   useEffect(() => {
     fetchEntries().then((resp) => { setEntries(resp.data) })
+    fetchAccounts().then(({ data }) => { setAccList(data) })
   }, []);
 
   return (
     <div>
 
-      <NewEntryBlock />
+      <NewEntryBlock accList={accList} />
 
       <MainBookFilter />
 
