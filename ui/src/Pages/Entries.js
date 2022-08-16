@@ -26,7 +26,7 @@ function NewEntryBlock({accList, setEntries}) {
         setNewDrAcc({'name': ''});
         setSum('');
         setComment('');
-        fetchEntries().then(({ data }) => { console.log('data', data); setEntries(data) })
+        fetchEntries().then(({ data }) => { setEntries(data) })
       })
       .catch((err) => {setErr('err')})
   }

@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 
 export default function Header() {
   const { t } = useTranslation();
+  const currency = localStorage.getItem("currency");
 
   return (
     <div className="header-row">
@@ -19,7 +20,7 @@ export default function Header() {
                 {t('Settings')}
             </a>
             <div style={{textAlign: "center"}}>
-                'cur'
+                {currency}
             </div>
         </div>
     </div>

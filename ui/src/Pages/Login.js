@@ -13,9 +13,10 @@ export default function Login(props) {
     const username = e.target.username.value;
     const password = e.target.password.value;
     SubmitLogin(username, password)
-      .then( response => {
-        setUser(username);
-        localStorage.setItem('user', username);
+      .then( ({data}) => {
+        setUser(data.user);
+        localStorage.setItem('user', data.user);
+        localStorage.setItem('currency', data.currency);
         navigate('/reports/', {replace: true});
       })
       .catch((err) => { setError(err.response.data['non_field_errors']); })
