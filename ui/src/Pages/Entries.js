@@ -4,7 +4,7 @@ import { fetchEntries, fetchAccounts, postNewEntry } from '../Api/Main';
 import AccountTreeModal from '../Components/AccountTreeModal';
 
 
-function NewEntryBlock({accList}) {
+function NewEntryBlock({accList, setEntries}) {
   const [date, setDate] = useState()
   const [comment, setComment] = useState()
   const [sum, setSum] = useState()
@@ -12,14 +12,25 @@ function NewEntryBlock({accList}) {
   const [newCrAcc, setNewCrAcc] = useState("");
   const [accTreeIsOpen, setAccTreeIsOpen] = useState(false);
   const [targetAcc, setTargetAcc] = useState('')
+  const [err, setErr] = useState('')
+
   const handleClick = (targetAcc) => {
     setTargetAcc(targetAcc);
     setAccTreeIsOpen(true);
   }
   const handleSubmit = (e) => {
     e.preventDefault();
-    postNewEntry(date, newDrAcc.id, newCrAcc.id, sum, comment);
+    postNewEntry(date, newDrAcc.id, newCrAcc.id, sum, comment)
+      .then((resp) => {
+        setNewCrAcc({'name': ''});
+        setNewDrAcc({'name': ''});
+        setSum('');
+        setComment('');
+        fetchEntries().then(({ data }) => { console.log('data', data); setEntries(data) })
+      })
+      .catch((err) => {setErr('err')})
   }
+
   return (
     <>
 
@@ -28,8 +39,8 @@ function NewEntryBlock({accList}) {
           <input onChange={(e) => setDate(e.target.value)} type="date" />
           <input onClick={e => handleClick('dr')} value={newDrAcc.name} />
           <input onClick={e => handleClick('cr')} value={newCrAcc.name} />
-          <input onChange={(e) => setSum(e.target.value)} type="number" step="0.01"/>
-          <input onChange={(e) => setComment(e.target.value)} />
+          <input onChange={(e) => setSum(e.target.value)} type="number" step="0.01" value={sum} />
+          <input onChange={(e) => setComment(e.target.value)} value={comment} />
           <button onClick={handleSubmit}>Add</button>
         </form>
       </div>
@@ -103,7 +114,7 @@ export default function Entries() {
   return (
     <div>
 
-      <NewEntryBlock accList={accList} />
+      <NewEntryBlock accList={accList} setEntries={setEntries} />
 
       <MainBookFilter />
 

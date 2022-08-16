@@ -150,9 +150,10 @@ class EntriesListView(ListAPIView):
         date_from = self.request.GET.get("date-from") or date(today.year, today.month, 1).strftime("%Y-%m-%d")
         date_to = self.request.GET.get("date-to") or today.strftime("%Y-%m-%d")
         return (
-            Entry.objects.order_by("-date")
+            Entry.objects
             .filter(date__gte=date_from, date__lte=date_to, currency=currency, user=user)
             .values("id", "date", "acc_dr__name", "acc_cr__name", "total", "comment", "acc_cr__results")
+            .order_by("-date", "-id")
         )
 
 
