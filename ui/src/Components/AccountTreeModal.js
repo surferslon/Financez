@@ -7,8 +7,8 @@ function AccountItem({ accs, targetFunc, setAccTreeIsOpen, padding }) {
 
   return (
     <div>
-        { accs.map((acc) =>
-          <>
+        { accs.map((acc, idx) =>
+          <div key={idx}>
             <div
               key={acc.pk}
               className="acc-item"
@@ -25,7 +25,7 @@ function AccountItem({ accs, targetFunc, setAccTreeIsOpen, padding }) {
                 setAccTreeIsOpen={setAccTreeIsOpen}
               />
             }
-          </>
+          </div>
         )}
     </div>
   )

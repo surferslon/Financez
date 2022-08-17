@@ -42,3 +42,7 @@ export function fetchAccDetails(acc_id, periodFrom, periodTo) {
 export function fetchAccEntries(acc_id, month) {
   return apiClient.get(`/api/entries/report_entries/${acc_id}?month=${month}`)
 }
+
+export function fetchResults() {
+  return apiClient.get('/api/accounts/results/')
+}

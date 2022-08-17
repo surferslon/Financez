@@ -9,37 +9,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-def get_period_results(date_from, date_to, user, currency):
-    incomes_sum = (
-        Entry.objects.filter(
-            date__gte=date_from,
-            date__lte=date_to,
-            user=user,
-            acc_cr__results=Account.RESULT_INCOMES,
-            currency=currency,
-        )
-        .values("total")
-        .aggregate(sum=Sum("total"))["sum"]
-        or 0
-    )
-    expenses_sum = (
-        Entry.objects.filter(
-            date__gte=date_from,
-            date__lte=date_to,
-            user=user,
-            acc_dr__results=Account.RESULT_EXPENSES,
-            currency=currency,
-        )
-        .values("total")
-        .aggregate(sum=Sum("total"))["sum"]
-        or 0
-    )
-    inc_sum = round(incomes_sum, 3)
-    exp_sum = round(expenses_sum, 3)
-    res_sum = round(incomes_sum - expenses_sum, 3)
-    return f"{inc_sum:.3f}", f"{exp_sum:.3f}", f"{res_sum:.3f}"
-
-
 class ReportDataView(APIView):
     def calculate_results(self, results, entries, group_all):
         for entr in entries:
@@ -123,15 +92,11 @@ class ReportDataView(APIView):
         self.calculate_results(results, qs_inc, group_all)
         inc_accounts = self.get_income_accounts(qs_inc)
         exp_accounts = self.get_expenses_accounts(user, group_by_parent)
-        period_inc, period_exp, period_sum = get_period_results(period_from, period_to, user, currency)
         return Response(
             {
                 "accounts_incomes": inc_accounts,
                 "accounts_expenses": exp_accounts,
                 "results": sorted(results, key=lambda k: k["group_date"]),
-                "period_inc": period_inc,
-                "period_exp": period_exp,
-                "period_sum": period_sum,
             },
         )
 

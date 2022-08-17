@@ -4,16 +4,20 @@ import { fetchEntries, fetchAccounts, postNewEntry } from '../Api/Main';
 import AccountTreeModal from '../Components/AccountTreeModal';
 
 
-function NewEntryBlock({accList, setEntries}) {
+function NewEntryBlock({setEntries}) {
   const [date, setDate] = useState()
   const [comment, setComment] = useState()
   const [sum, setSum] = useState()
-  const [newDrAcc, setNewDrAcc] = useState("");
-  const [newCrAcc, setNewCrAcc] = useState("");
+  const [newDrAcc, setNewDrAcc] = useState({name: '', id: null});
+  const [newCrAcc, setNewCrAcc] = useState({name: '', id: null});
   const [accTreeIsOpen, setAccTreeIsOpen] = useState(false);
   const [targetAcc, setTargetAcc] = useState('')
+  const [accList, setAccList] = useState([]);
   const [err, setErr] = useState('')
 
+  useEffect(() => {
+    fetchAccounts().then(({ data }) => { setAccList(data) })
+  }, []);
   const handleClick = (targetAcc) => {
     setTargetAcc(targetAcc);
     setAccTreeIsOpen(true);
@@ -37,8 +41,8 @@ function NewEntryBlock({accList, setEntries}) {
       <div className="row">
         <form className="new-entry-form">
           <input onChange={(e) => setDate(e.target.value)} type="date" />
-          <input onClick={e => handleClick('dr')} value={newDrAcc.name} placeholder="Debit" />
-          <input onClick={e => handleClick('cr')} value={newCrAcc.name} placeholder="Credit"/>
+          <input onClick={e => handleClick('dr')} value={newDrAcc.name} placeholder="Debit" readOnly={true} />
+          <input onClick={e => handleClick('cr')} value={newCrAcc.name} placeholder="Credit" readOnly={true} />
           <input onChange={(e) => setSum(e.target.value)} type="number" step="0.01" value={sum} placeholder="Sum" />
           <input onChange={(e) => setComment(e.target.value)} value={comment} placeholder="Comment" />
           <button onClick={handleSubmit}>Add</button>
@@ -92,7 +96,7 @@ function Entry({entry}) {
       return value
   }
   return (
-    <div className="main-book-row" key={entry.id}>
+    <div className="main-book-row">
         <div className="main-book-item">{entry.date}</div>
         <div className="main-book-item">{entry.acc_dr__name}</div>
         <div className="main-book-item">{entry.acc_cr__name}</div>
@@ -104,17 +108,15 @@ function Entry({entry}) {
 
 export default function Entries() {
   const [entries, setEntries] = useState([]);
-  const [accList, setAccList] = useState([]);
 
   useEffect(() => {
     fetchEntries().then((resp) => { setEntries(resp.data) })
-    fetchAccounts().then(({ data }) => { setAccList(data) })
   }, []);
 
   return (
     <div>
 
-      <NewEntryBlock accList={accList} setEntries={setEntries} />
+      <NewEntryBlock setEntries={setEntries} />
 
       <MainBookFilter />
 
@@ -122,7 +124,7 @@ export default function Entries() {
 
       <div className="row">
           <div className="main-book">
-            { entries.map((e) => <Entry entry={e} />) }
+            { entries.map((e, idx) => <Entry entry={e} key={idx} />) }
           </div>
       </div>
 

@@ -1,7 +1,43 @@
+from collections import defaultdict
+from datetime import date, datetime, timedelta
+
+from django.db.models import F, Q, Sum
 from django.shortcuts import render
-from financez.models import Account
+from financez.models import Account, AccountBalance, Currency, Entry
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
+
+def get_period_results(date_from, date_to, user, currency):
+    incomes_sum = (
+        Entry.objects.filter(
+            date__gte=date_from,
+            date__lte=date_to,
+            user=user,
+            acc_cr__results=Account.RESULT_INCOMES,
+            currency=currency,
+        )
+        .values("total")
+        .aggregate(sum=Sum("total"))["sum"]
+        or 0
+    )
+    expenses_sum = (
+        Entry.objects.filter(
+            date__gte=date_from,
+            date__lte=date_to,
+            user=user,
+            acc_dr__results=Account.RESULT_EXPENSES,
+            currency=currency,
+        )
+        .values("total")
+        .aggregate(sum=Sum("total"))["sum"]
+        or 0
+    )
+    inc_sum = round(incomes_sum, 3)
+    exp_sum = round(expenses_sum, 3)
+    res_sum = round(incomes_sum - expenses_sum, 3)
+    return {"incomes": f"{inc_sum:.3f}", "expenses": f"{exp_sum:.3f}", "result": f"{res_sum:.3f}"}
 
 
 class AccountListView(ListAPIView):
@@ -46,3 +82,50 @@ class AccountListView(ListAPIView):
             "debts": [acc for acc in account_list if acc["results"] == "dbt"],
         }
         return Response(categorized_dict)
+
+
+class ResultsView(APIView):
+    def get(self, request):
+        user = request.user
+        currency = Currency.objects.get(user=user, selected=True)
+        res = (
+            AccountBalance.objects.filter(
+                Q(acc__results=Account.RESULT_ASSETS)
+                | Q(acc__results=Account.RESULT_PLANS)
+                | Q(acc__results=Account.RESULT_DEBTS),
+                currency=currency,
+                acc__user=user,
+            )
+            .exclude(total=0)
+            .values(
+                "acc__name",
+                "acc__results",
+                "total",
+                "acc__parent__name",
+                "acc__parent__order",
+            )
+            .order_by("acc__order")
+        )
+
+        today = datetime.now()
+        period_from = request.GET.get("period-from", date(today.year, 1, 1))
+        period_to = request.GET.get("period-to", today)
+        if isinstance(period_from, str):
+            period_from = datetime.strptime(period_from, "%Y-%m-%d")
+        if isinstance(period_to, str):
+            period_to = datetime.strptime(period_to, "%Y-%m-%d")
+        resp_dict = defaultdict(list)
+        resp_dict["period_results"] = get_period_results(period_from, period_to, user, currency)
+        for row in res:
+            resp_dict[row["acc__results"]].append(
+                {
+                    "name": (
+                        f"{row['acc__parent__name']}: {row['acc__name']}"
+                        if row["acc__parent__name"]
+                        else row["acc__name"]
+                    ),
+                    "sum": f"{row['total']:.3f}",
+                }
+            )
+
+        return Response(resp_dict)
