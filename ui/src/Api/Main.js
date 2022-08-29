@@ -46,3 +46,13 @@ export function fetchAccEntries(acc_id, month) {
 export function fetchResults() {
   return apiClient.get('/api/accounts/results/')
 }
+
+export function fetchCurrencies() {
+  return apiClient.get('/api/currencies/list/')
+}
+
+export function postCurrency(id) {
+  return apiClient.patch(`/api/currencies/set/${id}`, {selected: true},
+    {headers: { 'X-CSRFToken': Cookies.get('csrftoken') }}
+  )
+}

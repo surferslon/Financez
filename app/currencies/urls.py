@@ -1,9 +1,9 @@
+from currencies import views
 from django.urls import path
-
-from . import views
 
 app_name = "currencies"
 
 urlpatterns = [
-    # path("list/", views.ReportDataView.as_view(), name="report_data"),
+    path("list/", views.CurrenciesListView.as_view(), name="currencies_list"),
+    path("set/<int:pk>", views.CurrenciesSetView.as_view(), name="set_currency"),
 ]
