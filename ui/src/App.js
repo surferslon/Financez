@@ -2,29 +2,37 @@ import 'devextreme/dist/css/dx.common.css';
 import 'devextreme/dist/css/dx.light.css';
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom'
-import Header from './Components/Header'
-import Reports from './Pages/Reports';
+import Cookies from 'js-cookie';
 import Entries from './Pages/Entries';
-import Settings from './Pages/Settings';
+import Header from './Components/Header';
+import Footer from './Components/Footer';
 import Login from './Pages/Login'
+import Reports from './Pages/Reports';
+import Settings from './Pages/Settings';
 
 
 const AppLayout = ({setUser}) => {
   const loggedInUser = localStorage.getItem("user");
+
   useEffect(() => {
     if (loggedInUser) {
       setUser(loggedInUser);
     }
   }, []);
+
   if (!loggedInUser) {
+    localStorage.clear();
+    Cookies.remove('csrftoken')
     return <Navigate to="/login" replace />;
   }
+
   return (
     <>
       <Header />
       <Outlet />
+      {/* <Footer /> */}
     </>
-    )
+  )
 };
 
 const LoginLayout = () => (

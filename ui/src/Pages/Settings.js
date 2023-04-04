@@ -1,3 +1,4 @@
+import Cookies from 'js-cookie';
 import { useEffect, useState } from 'react';
 import { fetchCurrencies, postCurrency } from '../Api/Main';
 import '../Styles/settings.css';
@@ -106,9 +107,12 @@ function LanguageBlock() {
 }
 
 function LogoutBlock() {
+  function handleClick(e) {
+    e.preventDefault()
+  }
   return (
     <div className="settings-row">
-      <a href="">Log out</a>
+      <a href="#" onClick={e => handleClick(e)}>Log out</a>
     </div>
   )
 }

@@ -23,26 +23,36 @@ export default function Login(props) {
   }
 
   return (
-    <div>
+    <div className="content">
+      <div className="grid-container">
 
-      <div className="frame">
-          <div className="frame-header">Financez</div>
-          <form className="auth-form" onSubmit={OnSubmit}>
-            <input name='username'></input>
-            <input name='password'></input>
-            <input  type="hidden" name="next" value="next" />
-            <button type="submit" value="login">Log in</button>
-            <div className="error-list">
-              {error}
-            </div>
-          </form>
+        <div className="logo-wrapper">
+            <img style={{height: "200px"}} src=""/>
+        </div>
+
+        <div>
+
+          <div className="frame">
+              <div className="frame-header">Financez</div>
+              <form className="auth-form" onSubmit={OnSubmit}>
+                <input name='username'></input>
+                <input type="password" name='password'></input>
+                <input  type="hidden" name="next" value="next" />
+                <button type="submit" value="login">Log in</button>
+                <div className="error-list">
+                  {error}
+                </div>
+              </form>
+          </div>
+
+          <div className="frame signup-frame">
+            <span> "Don't have an account?"</span>
+            <a href=""></a>
+          </div>
+
+        </div>
+
       </div>
-
-      <div className="frame signup-frame">
-          <span> "Don't have an account?"</span>
-          <a href=""></a>
-      </div>
-
     </div>
   );
 }

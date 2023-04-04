@@ -203,7 +203,7 @@ export default function Reports() {
   const [accEntries, setAccEntries] = useState({})
 
   return (
-    <div>
+    <>
 
       <div className="dashboard">
         <SettingsBlock />
@@ -216,6 +216,6 @@ export default function Reports() {
 
       {accEntries.entries && <AccEntriesBlock accEntries={accEntries} /> }
 
-    </div>
+    </>
   );
 }
