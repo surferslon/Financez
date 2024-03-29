@@ -1,33 +1,50 @@
-var show_entries = function(response) {
+function show_entries (response) {
     $('#report_entries').css('display', 'flex');
     $('#report_entries').html(response);
 }
 
-var create_report = function(response) {
-    var expenses_accs
-    var incomes_accs
-    var seriesSource = []
-    var dataSource = [{}]
-    var ExpIndex = response.accounts_incomes.length
-
-   $("#period_inc").text(response.period_inc);
-   $("#period_exp").text(response.period_exp);
-   $("#period_sum").text(response.period_sum);
-
-    for (var i=0; i<response.accounts_incomes.length; i++) {
-        seriesSource.push({
-            valueField: response.accounts_incomes[i],
-            name: response.accounts_incomes[i],
-            stack: 'incomes',
-        })
+function mergeSeries(data){
+        const seriesSource = [];
+        for (let i=0; i<data.accounts_incomes.length; i++) {
+            seriesSource.push({
+                valueField: data.accounts_incomes[i],
+                name: data.accounts_incomes[i],
+                stack: "incomes",
+            })
+        }
+        for (let i=0; i<data.accounts_expenses.length; i++) {
+            seriesSource.push({
+                valueField: data.accounts_expenses[i],
+                name: data.accounts_expenses[i],
+                stack: "expenses",
+            })
+        }
+        return seriesSource;
     }
-    for (var i=0; i<response.accounts_expenses.length; i++) {
-        seriesSource.push({
-            valueField: response.accounts_expenses[i],
-            name: response.accounts_expenses[i],
-            stack: 'expenses',
-        })
+
+function castStrToFloat(data){
+    for (let i=0; i<data.length; i++) {
+        let resObj = data[i];
+        for (let key in resObj) {
+            if (key === "group_date") {
+                continue;
+            }
+            resObj[key] = parseFloat(resObj[key]);
+        }
     }
+    return data;
+}
+
+function setPeriodResults(data){
+    document.getElementById("period_inc").innerText = data.period_inc;
+    document.getElementById("period_exp").innerText = data.period_exp;
+    document.getElementById("period_sum").innerText = data.period_sum;
+}
+
+function create_report(response) {
+    setPeriodResults(response);
+    const seriesSource = mergeSeries(response);
+    castStrToFloat(response.results);
 
     $("#chart").dxChart({
         palette: "Soft Pastel",

@@ -1,4 +1,4 @@
-from financez.models import Currency
+from currencies.models import Currency
 from rest_framework import serializers
 
 

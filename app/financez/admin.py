@@ -1,6 +1,7 @@
+from accounts.models import Account, AccountBalance
+from currencies.models import Currency
 from django.contrib import admin
-
-from .models import Account, AccountBalance, Currency, Entry
+from entries.models import Entry
 
 admin.site.register(Entry)
 admin.site.register(Account)

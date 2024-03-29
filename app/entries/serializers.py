@@ -1,4 +1,4 @@
-from financez.models import Entry
+from entries.models import Entry
 from rest_framework import serializers
 
 

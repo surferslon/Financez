@@ -1,10 +1,11 @@
 from decimal import Decimal
 
+from accounts.models import Account, AccountBalance
+from currencies.models import Currency
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-
-from .models import Account, AccountBalance, Currency, Entry
+from entries.models import Entry
 
 
 class EntryModelTests(TestCase):

@@ -22,11 +22,13 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "financez.apps.FinancezConfig",
+    "currencies.apps.CurrenciesConfig",
     "registration.apps.RegistrationConfig",  # to be removed
     "users.apps.UsersConfig",
     "accounts.apps.AccountsConfig",
     "entries.apps.EntriesConfig",
-    "currencies.apps.CurrenciesConfig",
+    "reports.apps.ReportsConfig",
+    "settings.apps.SettingsConfig",
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True

@@ -1,0 +1,10 @@
+{% if account_list %}
+
+    {% for acc in account_list %}
+        {% if acc.results == type %}
+            <div class="acc-item" style="padding-left: {{ padding|add:20 }}px" data-accpk="{{ acc.pk }}">{{ acc.name }}</div>
+            {% include 'accounts/account_list.html' with account_list=acc.subaccs nested=True padding=padding|add:20 %}
+        {% endif %}
+    {% endfor %}
+
+{% endif %}

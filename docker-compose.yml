@@ -8,12 +8,6 @@ services:
             - ./db:/usr/db
         working_dir: /usr/app
         command: "poetry run gunicorn financez.wsgi"
-        network_mode: "host"
-
-    ui:
-        build:
-            context: ./ui
-            dockerfile: 'Dockerfile'
+        command: [nginx, '-g', 'daemon off;']
         ports:
             - 80:80
-        command: [nginx, '-g', 'daemon off;']

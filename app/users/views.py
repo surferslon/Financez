@@ -1,6 +1,6 @@
+from currencies.models import Currency
 from django.contrib.auth import login
 from django.contrib.auth.models import User
-from financez.models import Currency
 from rest_framework import permissions, status, views
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response

@@ -1,20 +1,117 @@
 import calendar
 from datetime import date, datetime, timedelta
 
-from accounts.models import Account, Currency
-from accounts.utils import make_account_tree
+from accounts.models import Account, AccountBalance
+from currencies.models import Currency
 from django.db.models import F, Q, Sum
-from django.views.generic import CreateView
-from entries.forms import NewEntryForm
+from django.http import HttpResponse, JsonResponse
+from django.template.response import TemplateResponse
+from django.views import View
+from django.views.generic import TemplateView
 from entries.models import Entry
-from entries.serializers import EntryCreateSerializer, EntrySerializer
-from rest_framework.generics import CreateAPIView, ListAPIView
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 
-class ReportDataView(APIView):
-    def calculate_results(self, results, entries, group_all):
+def change_field(request):
+    acc_pk = request.POST.get("acc_pk")
+    acc_field = request.POST.get("acc_field")
+    new_value = request.POST.get("value")
+    update_params = {acc_field: new_value}
+    Account.objects.filter(pk=acc_pk).update(**update_params)
+    return HttpResponse("")
+
+
+def append_missing_dates(results, group, period_from, period_to):
+    iter_date = period_from
+    while iter_date < period_to:
+        group_date = "Total" if group else f"{iter_date.year}.{iter_date.month}"
+        group_dict = next((item for item in results if item["group_date"] == group_date), None)
+        if not group_dict:
+            results.append({"group_date": group_date})
+        if iter_date.month > 11:
+            iter_date = iter_date.replace(year=iter_date.year + 1, month=1, day=1)
+        else:
+            iter_date = iter_date.replace(month=iter_date.month + 1, day=1)
+
+    return results
+
+
+def get_period_results(date_from, date_to, user, currency):
+    incomes_sum = (
+        Entry.objects.filter(
+            date__gte=date_from,
+            date__lte=date_to,
+            user=user,
+            acc_cr__results=Account.RESULT_INCOMES,
+            currency=currency,
+        )
+        .values("total")
+        .aggregate(sum=Sum("total"))["sum"]
+        or 0
+    )
+    expenses_sum = (
+        Entry.objects.filter(
+            date__gte=date_from,
+            date__lte=date_to,
+            user=user,
+            acc_dr__results=Account.RESULT_EXPENSES,
+            currency=currency,
+        )
+        .values("total")
+        .aggregate(sum=Sum("total"))["sum"]
+        or 0
+    )
+    inc_sum = round(incomes_sum, 3)
+    exp_sum = round(expenses_sum, 3)
+    res_sum = round(incomes_sum - expenses_sum, 3)
+    return f"{inc_sum:.3f}", f"{exp_sum:.3f}", f"{res_sum:.3f}"
+
+
+class MainView(TemplateView):
+    template_name = "reports/index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(MainView, self).get_context_data(**kwargs)
+        today = datetime.now()
+        user = self.request.user
+
+        context["period_from"] = date(today.year, 1, 1).strftime("%Y-%m-%d")
+        context["period_to"] = today.strftime("%Y-%m-%d")
+        context["current_month"] = today
+        context["current_cur"] = Currency.objects.get(user=user, selected=True)
+        # results
+        try:
+            currency = Currency.objects.get(user=user, selected=True)
+        except Currency.DoesNotExist:
+            currency = None
+        context["results_queryset"] = (
+            AccountBalance.objects.filter(
+                Q(acc__results=Account.RESULT_ASSETS) | Q(acc__results=Account.RESULT_PLANS) | Q(acc__results=Account.RESULT_DEBTS),
+                currency=currency,
+                acc__user=user,
+            )
+            .exclude(total=0)
+            .values(
+                "acc__name",
+                "acc__results",
+                "total",
+                "acc__parent__name",
+                "acc__parent__order",
+            )
+            .order_by("acc__order")
+        )
+
+        context["result_types"] = {
+            "assets": Account.RESULT_ASSETS,
+            "debts": Account.RESULT_DEBTS,
+            "plans": Account.RESULT_PLANS,
+            "incomes": Account.RESULT_INCOMES,
+            "expenses": Account.RESULT_EXPENSES,
+        }
+        return context
+
+
+class ReportDataView(View):
+    def _calculate_results(self, results, entries, group_by_parent, group_all):
         for entr in entries:
             if group_all:
                 group_date = "Total"
@@ -22,34 +119,30 @@ class ReportDataView(APIView):
                 month = entr.date.strftime("%m")
                 group_date = f"{entr.date.year}.{month}"
             if entr.acc_dr.results == Account.RESULT_EXPENSES:
-                acc_name = entr.acc_dr.parent.id if entr.acc_dr.parent else entr.acc_dr.id
+                if group_by_parent:
+                    acc_name = f"exp:{entr.acc_dr.parent.name}" if entr.acc_dr.parent else f"exp:{entr.acc_dr.name}"
+                else:
+                    acc_name = f"exp:{entr.acc_dr.parent.name}:{entr.acc_dr.name}" if entr.acc_dr.parent else f"exp:{entr.acc_dr.name}"
             else:
-                acc_name = entr.acc_cr.id
+                acc_name = f"inc:{entr.acc_cr.name}"
             if group_dict := next((item for item in results if item["group_date"] == group_date), None):
                 group_dict[acc_name] = entr.total + group_dict.get(acc_name, 0)
             else:
                 results.append({"group_date": group_date, acc_name: entr.total})
 
     def get_income_accounts(self, qs_inc):
-        return [
-            {"name": f"inc:{acc.name}", "id": acc.id}
-            for acc in Account.objects.filter(id__in=set(qs_inc.values_list("acc_cr__id", flat=True)))
-        ]
+        return [f"inc:{acc}" for acc in set(qs_inc.values_list("acc_cr__name", flat=True))]
 
     def get_expenses_accounts(self, user, group_by_parent):
         return (
             [
-                {"name": f"exp:{acc['name']}", "id": acc["id"]}
-                for acc in Account.objects.filter(results=Account.RESULT_EXPENSES, parent=None, user=user)
-                .order_by("order")
-                .values("name", "id")
+                f'exp:{acc["name"]}'
+                for acc in Account.objects.filter(results=Account.RESULT_EXPENSES, parent=None, user=user).order_by("order").values("name")
             ]
             if group_by_parent
             else [
-                {"name": f'exp:{acc["parent__name"]}:{acc["name"]}', "id": acc["id"]}
-                for acc in Account.objects.filter(results=Account.RESULT_EXPENSES, user=user)
-                .values("name", "parent__name", "id")
-                .distinct()
+                f'exp:{acc["parent__name"]}:{acc["name"]}'
+                for acc in Account.objects.filter(results=Account.RESULT_EXPENSES, user=user).values("name", "parent__name").distinct()
             ]
         )
 
@@ -60,7 +153,6 @@ class ReportDataView(APIView):
         period_from = request.GET.get("period-from", date(today.year, 1, 1))
         period_to = request.GET.get("period-to", today)
         user = request.user
-        print(user)
         try:
             currency = Currency.objects.get(user=user, selected=True)
         except Currency.DoesNotExist:
@@ -92,21 +184,29 @@ class ReportDataView(APIView):
             .order_by("date")
         )
         results = []
-        self.calculate_results(results, qs_exp, group_all)
-        self.calculate_results(results, qs_inc, group_all)
+        self._calculate_results(results, qs_exp, group_by_parent, group_all)
+        self._calculate_results(results, qs_inc, group_by_parent, group_all)
         inc_accounts = self.get_income_accounts(qs_inc)
         exp_accounts = self.get_expenses_accounts(user, group_by_parent)
-        return Response(
+        period_inc, period_exp, period_sum = get_period_results(period_from, period_to, user, currency)
+        return JsonResponse(
             {
                 "accounts_incomes": inc_accounts,
                 "accounts_expenses": exp_accounts,
                 "results": sorted(results, key=lambda k: k["group_date"]),
+                "period_inc": period_inc,
+                "period_exp": period_exp,
+                "period_sum": period_sum,
             },
+            safe=False,
         )
 
 
-class ReportDetailsView(APIView):
-    def _get_period_from(self, request):
+class ReportDetailsView(View):
+    def _get_period_from(
+        self,
+        request,
+    ):
         period_from = request.GET.get("period-from", date(datetime.now().year, 1, 1))
         if isinstance(period_from, str):
             try:
@@ -127,9 +227,12 @@ class ReportDetailsView(APIView):
         return period_to
 
     def get(self, request, *args, **kwargs):
-        acc_id = kwargs["acc_id"]
-        parent_acc = Account.objects.get(id=acc_id)
-        res_type = parent_acc.results
+        category = request.GET.get("category")
+        results, category = category.split(":")
+        try:
+            parent_acc = Account.objects.get(name=category, results=results)
+        except Account.DoesNotExist:
+            parent_acc = Account.objects.get(name__contains=category, results=results)
         period_from = self._get_period_from(request)
         period_to = self._get_period_to(request)
         params = {
@@ -138,7 +241,7 @@ class ReportDetailsView(APIView):
             "date__gte": period_from,
             "date__lte": period_to,
         }
-        if res_type == "exp":
+        if results == "exp":
             qs = Entry.objects.filter(Q(acc_dr__parent=parent_acc) | Q(acc_dr=parent_acc), **params).annotate(
                 acc_name=F("acc_dr__name"), acc_id=F("acc_dr__id")
             )
@@ -166,12 +269,15 @@ class ReportDetailsView(APIView):
             if entry.acc_id not in accounts:
                 accounts.append(entry.acc_id)
         accounts = [{"valueField": acc.id, "name": acc.name} for acc in Account.objects.filter(id__in=accounts).order_by("order")]
-        return Response({"title": parent_acc.name, "results": results, "accounts": accounts})
+        return JsonResponse(
+            {"title": parent_acc.name, "results": results, "accounts": accounts},
+            safe=False,
+        )
 
 
-class AccEntriesView(APIView):
+class ReportEntriesView(View):
     def get(self, request, *args, **kwargs):
-        acc_id = kwargs.get("acc_id")
+        acc_id = request.GET.get("acc_id")
         acc = Account.objects.get(id=acc_id)
         today = datetime.now()
         month = request.GET.get("month", None)
@@ -187,83 +293,20 @@ class AccEntriesView(APIView):
             else:
                 params["date__lte"] = date(year=int(year), month=int(month) + 1, day=1) - timedelta(days=1)
         else:
-            period_from = request.GET.get("period-from", date(today.year, 1, 1))
-            period_to = request.GET.get("period-to", today)
-            if isinstance(period_from, str):
-                period_from = datetime.strptime(period_from, "%Y-%m-%d")
-            if isinstance(period_to, str):
-                period_to = datetime.strptime(period_to, "%Y-%m-%d")
-            params["date__gte"] = period_from
-            params["date__lte"] = period_to
+            self._set_time_period(request, today, params)
         qs = Entry.objects.filter(Q(acc_cr=acc) | Q(acc_dr=acc), **params).order_by("-date")
-        return Response({"entries": qs.values("date", "total", "comment"), "total_sum": qs.aggregate(Sum("total"))["total__sum"]})
-
-
-class EntriesListView(ListAPIView):
-    serializer_class = EntrySerializer
-
-    def get_queryset(self):
-        today = datetime.now()
-        user = self.request.user
-        currency = Currency.objects.get(user=user, selected=True)
-        date_from = self.request.GET.get("date-from") or date(today.year, today.month, 1).strftime("%Y-%m-%d")
-        date_to = self.request.GET.get("date-to") or today.strftime("%Y-%m-%d")
-        return (
-            Entry.objects.filter(date__gte=date_from, date__lte=date_to, currency=currency, user=user)
-            .values("id", "date", "acc_dr__name", "acc_cr__name", "total", "comment", "acc_cr__results")
-            .order_by("-date", "-id")
+        return TemplateResponse(
+            request,
+            "reports/report_entries.html",
+            {"entries": qs, "total_sum": qs.aggregate(Sum("total"))["total__sum"]},
         )
 
-
-class EntryCreateView(CreateAPIView):
-    serializer_class = EntryCreateSerializer
-
-    def get_serializer(self, data):
-        user = self.request.user
-        data["user"] = user.id
-        data["currency"] = Currency.objects.get(user=user, selected=True).id
-        return super().get_serializer(data=data)
-
-
-class EntriesView(CreateView):
-    model = Entry
-    template_name = "entries/index.html"
-    form_class = NewEntryForm
-    success_url = "/entries"
-
-    def form_valid(self, form):
-        user = self.request.user
-        form.instance.user = user
-        form.instance.currency_id = Currency.objects.get(user=user, selected=True).id
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        today = datetime.now()
-        user = self.request.user
-        date_from = self.request.GET.get("date-from") or date(today.year, today.month, 1).strftime("%Y-%m-%d")
-        date_to = self.request.GET.get("date-to") or today.strftime("%Y-%m-%d")
-        context["current_cur"] = Currency.objects.get(user=user, selected=True)
-        context["result_types"] = {
-            "assets": Account.RESULT_ASSETS,
-            "debts": Account.RESULT_DEBTS,
-            "plans": Account.RESULT_PLANS,
-            "incomes": Account.RESULT_INCOMES,
-            "expenses": Account.RESULT_EXPENSES,
-        }
-        try:
-            currency = Currency.objects.get(user=user, selected=True)
-        except Currency.DoesNotExist:
-            currency = None
-        context["current_month"] = today
-        # entries per month
-        context["entries"] = (
-            Entry.objects.order_by("-date")
-            .filter(date__gte=date_from, date__lte=date_to, currency=currency, user=user)
-            .values("date", "acc_dr__name", "acc_cr__name", "total", "comment", "acc_cr__results")
-        )
-        # accounts
-        context["account_list"] = make_account_tree(user)
-        context["date_from"] = date_from
-        context["date_to"] = date_to
-        return context
+    def _set_time_period(self, request, today, params):
+        period_from = request.GET.get("period-from", date(today.year, 1, 1))
+        period_to = request.GET.get("period-to", today)
+        if isinstance(period_from, str):
+            period_from = datetime.strptime(period_from, "%Y-%m-%d")
+        if isinstance(period_to, str):
+            period_to = datetime.strptime(period_to, "%Y-%m-%d")
+        params["date__gte"] = period_from
+        params["date__lte"] = period_to

@@ -1,9 +1,13 @@
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 
+from accounts.forms import NewAccForm
+from accounts.models import Account, AccountBalance
+from currencies.models import Currency
 from django.db.models import F, Q, Sum
-from django.shortcuts import render
-from financez.models import Account, AccountBalance, Currency, Entry
+from django.urls import reverse
+from django.views.generic import CreateView, DeleteView
+from entries.models import Entry
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -40,6 +44,25 @@ def get_period_results(date_from, date_to, user, currency):
     return {"incomes": f"{inc_sum:.3f}", "expenses": f"{exp_sum:.3f}", "result": f"{res_sum:.3f}"}
 
 
+class DelAccView(DeleteView):
+    model = Account
+
+    def get_success_url(self, **kwargs):
+        return reverse("settings", args=(self.request.POST.get("section"),))
+
+
+class NewAccView(CreateView):
+    model = Account
+    form_class = NewAccForm
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self, **kwargs):
+        return reverse("settings", args=(self.request.POST.get("results"),))
+
+
 class AccountListView(ListAPIView):
     def add_subaccounts(self, acc_list, filtered_list):
         result_tree = []
@@ -48,9 +71,7 @@ class AccountListView(ListAPIView):
             if subaccounts := list(filter(lambda x: x["parent_id"] == parent_id, acc_list)):
                 acc["subaccs"] = subaccounts
                 for subacc in subaccounts:
-                    subacc["subaccs"] = self.add_subaccounts(
-                        acc_list, filter(lambda x: x["parent_id"] == subacc["pk"], acc_list)
-                    )
+                    subacc["subaccs"] = self.add_subaccounts(acc_list, filter(lambda x: x["parent_id"] == subacc["pk"], acc_list))
             result_tree.append(acc)
         return result_tree
 
@@ -62,11 +83,7 @@ class AccountListView(ListAPIView):
                 .order_by("order")
             )
         else:
-            accounts = (
-                Account.objects.filter(user=user)
-                .values("pk", "parent_id", "name", "order", "results")
-                .order_by("order")
-            )
+            accounts = Account.objects.filter(user=user).values("pk", "parent_id", "name", "order", "results").order_by("order")
         acc_list = list(accounts)
         return self.add_subaccounts(acc_list, filter(lambda x: x["parent_id"] is None, acc_list))
 
@@ -90,9 +107,7 @@ class ResultsView(APIView):
         currency = Currency.objects.get(user=user, selected=True)
         res = (
             AccountBalance.objects.filter(
-                Q(acc__results=Account.RESULT_ASSETS)
-                | Q(acc__results=Account.RESULT_PLANS)
-                | Q(acc__results=Account.RESULT_DEBTS),
+                Q(acc__results=Account.RESULT_ASSETS) | Q(acc__results=Account.RESULT_PLANS) | Q(acc__results=Account.RESULT_DEBTS),
                 currency=currency,
                 acc__user=user,
             )
@@ -119,11 +134,7 @@ class ResultsView(APIView):
         for row in res:
             resp_dict[row["acc__results"]].append(
                 {
-                    "name": (
-                        f"{row['acc__parent__name']}: {row['acc__name']}"
-                        if row["acc__parent__name"]
-                        else row["acc__name"]
-                    ),
+                    "name": (f"{row['acc__parent__name']}: {row['acc__name']}" if row["acc__parent__name"] else row["acc__name"]),
                     "sum": f"{row['total']:.3f}",
                 }
             )
