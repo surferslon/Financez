@@ -1,38 +1,7 @@
-function show_entries (response) {
-    $('#report_entries').css('display', 'flex');
-    $('#report_entries').html(response);
-}
-
-function mergeSeries(data){
-        const seriesSource = [];
-        for (let i=0; i<data.accounts_incomes.length; i++) {
-            seriesSource.push({
-                valueField: data.accounts_incomes[i],
-                name: data.accounts_incomes[i],
-                stack: "incomes",
-            })
-        }
-        for (let i=0; i<data.accounts_expenses.length; i++) {
-            seriesSource.push({
-                valueField: data.accounts_expenses[i],
-                name: data.accounts_expenses[i],
-                stack: "expenses",
-            })
-        }
-        return seriesSource;
-    }
-
-function castStrToFloat(data){
-    for (let i=0; i<data.length; i++) {
-        let resObj = data[i];
-        for (let key in resObj) {
-            if (key === "group_date") {
-                continue;
-            }
-            resObj[key] = parseFloat(resObj[key]);
-        }
-    }
-    return data;
+function show_entries(response) {
+    let reportEntries = document.getElementById("report_entries");
+    reportEntries.style.display = "flex";
+    reportEntries.innerHTML = response;
 }
 
 function setPeriodResults(data){
@@ -41,61 +10,81 @@ function setPeriodResults(data){
     document.getElementById("period_sum").innerText = data.period_sum;
 }
 
-function create_report(response) {
-    setPeriodResults(response);
-    const seriesSource = mergeSeries(response);
-    castStrToFloat(response.results);
-
-    $("#chart").dxChart({
-        palette: "Soft Pastel",
-        dataSource: response.results,
-        commonSeriesSettings: {
-            argumentField: "group_date",
-            type: "stackedBar",
-            hoverMode: "allSeriesPoints",
-            selectionMode: "allSeriesPoints",
-        },
-        series: seriesSource,
-        legend: {
-            horizontalAlignment: "left",
-            verticalAlignment: "top",
-            position: "outside",
-            border: { visible: false },
-            columnCount: 1,
-        },
-        valueAxis: { },
-        loadingIndicator: { enabled: true },
-        "export": { enabled: false },
-        onPointClick: function(e) {
-            let data_details_url = $('.demo-container').data('details-url')
-            $.get([
-                data_details_url,
-                '?category=', e.target.series.name,
-                '&period-from=', e.target.argument,
-                '&period-to=', e.target.argument,
-                '&group_details=', false
-            ].join(''), create_report_details)
-        },
-        onLegendClick: function(e) {
-            let data_details_url = $('.demo-container').data('details-url')
-            $.get([
-                data_details_url,
-                '?category=', e.target.name,
-                '&period-from=', $('#period-from').val(),
-                '&period-to=', $('#period-to').val(),
-                '&group_details=', $('#group_details').is(':checked')
-            ].join(''), create_report_details)
-        },
-        tooltip: {
-            enabled: true,
-            customizeTooltip: function (arg) {
-                return { text: arg.seriesName + "\n" + parseFloat(arg.valueText).toFixed(3) }
-            },
-        }
-    });
+function createLegend(response) {
+    const legend = document.getElementById("chartLegend");
+    legend.innerHTML = "";
+    legend.innerHTML += '<span>Incomes</span>'
+    for (let i = 0; i < response.accounts_incomes.length; i++) {
+        legend.innerHTML += `<span class="legendItem">${response.accounts_incomes[i]}</span>`;
+    }
+    legend.innerHTML += '<span>Expenses</span>'
+    for (let i = 0; i < response.accounts_expenses.length; i++) {
+        legend.innerHTML += `<span class="legendItem">${response.accounts_expenses[i]}</span>`;
+    }
 }
 
-var create_report_details = function(response) {
+function create_background(max_value){
+    const chartBackground = document.getElementById("chartBackground");
+    chartBackground.innerHTML = "";
+    chartBackground.style.height = `${document.getElementById("chartArea").offsetHeight}px`;
+    chartBackground.style.width = `${document.getElementById("chartArea").offsetWidth}px`;
+    const step = (1000 / max_value) * 100;
+    for (let i = 0; i < 100; i += step) {
+        const line = document.createElement("div");
+        line.style.height = `${step}%`;
+        line.style.borderTop = "1px solid #ccc";
+        chartBackground.appendChild(line);
+    }
+}
+
+function create_report(response) {
+    setPeriodResults(response);
+    createLegend(response);
+    const chartArea = document.getElementById("chartArea")
+    const periodTitles = document.getElementById("periodTitles")
+    chartArea.innerHTML = "";
+    periodTitles.innerHTML = "";
+    const periodsLen = Object.keys(response.results).length;
+    const maxValue = response.max_value;
+    chartArea.style.gridTemplateColumns = `repeat(${periodsLen}, 1fr)`;
+    periodTitles.style.gridTemplateColumns = `repeat(${periodsLen}, 1fr)`;
+    for (const [period, periodVals] of Object.entries(response.results)) {
+        const periodDiv = document.createElement("div");
+        periodDiv.className = "chartPeriodBlock";
+        const periodExps = document.createElement("div");
+        const periodIncs = document.createElement("div");
+        periodExps.className = "periodBar"
+        periodIncs.className = "periodBar"
+        for (const [acc, val] of Object.entries(periodVals)) {
+            for (const [accName, accValue] of Object.entries(val)) {
+                const bar = document.createElement("div");
+                const barHeight = (accValue / maxValue) * 100;
+                bar.style.height = `${barHeight}%`;
+                if (barHeight > 3) {
+                    bar.innerHTML = `<span>${accName} ${accValue}</span>`;
+                }
+                if (acc == "incs") {
+                    bar.className = "periodIncs";
+                    periodIncs.appendChild(bar);
+                } else {
+                    bar.className = "periodExps";
+                    periodExps.appendChild(bar);
+                }
+                bar.classList.add("barItem");
+            }
+        }
+        periodDiv.appendChild(periodIncs);
+        periodDiv.appendChild(periodExps);
+        chartArea.appendChild(periodDiv);
+        const periodTitle = document.createElement("div");
+        periodTitle.className = "periodTitle";
+        periodTitle.innerText = period;
+        periodTitles.appendChild(periodTitle);
+    }
+    create_background(maxValue);
+}
+
+function create_report_details(response) {
     $("#chart_details").parents('.dx-viewport').removeClass('dx_hidden');
     $("#chart_details").dxChart({
         palette: "soft",
@@ -155,20 +144,25 @@ var create_report_details = function(response) {
     });
 }
 
-$(function() {
-    let data_url = $('.demo-container').data('url')
-    $.get(data_url, create_report);
-    $('#update-report').click(function(event){
-        $.get([
+
+document.addEventListener("DOMContentLoaded", function() {
+    const data_url = document.getElementById("chartContainer").dataset.url;
+    fetch(data_url)
+        .then(response => response.json())
+        .then(resp_json => create_report(resp_json));
+    document.querySelector('#update-report').addEventListener("click", function(event){
+        fetch([
             data_url,
-            '?period-from=', $('#period-from').val(),
-            '&period-to=', $('#period-to').val(),
-            '&group_all=', $('#group_all').is(":checked")
-        ].join(''), create_report );
-    })
-    $('#modal-background').click(function(event) {
-        $('#modal-background').css('display', 'none');
-        $('#report_details').css('display', 'none');
-        $('body').css('overflow', 'auto');
+            '?period-from=', document.querySelector('#period-from').value,
+            '&period-to=', document.querySelector('#period-to').value,
+            '&group_all=', document.querySelector('#group_all').checked
+        ].join(''))
+        .then(response => response.json())
+        .then(resp_json => create_report(resp_json));
+    });
+    document.querySelector('#modal-background').addEventListener('click', function(event) {
+        document.querySelector('#modal-background').style.display = 'none';
+        document.querySelector('#report_details').style.display = 'none';
+        document.body.style.overflow = 'auto';
     });
 });

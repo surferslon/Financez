@@ -1,0 +1,78 @@
+#chartContainer {
+    margin: 4px 10px 10px 10px;
+    background-color: white;
+    border: 1px solid #e6e6e6
+}
+#chartBackground {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    z-index: 1;
+}
+#chart {
+    display: grid;
+    grid-template-columns: 15% 85%;
+    margin: 20px;
+}
+#chartArea {
+    display: grid;
+    background-color: none;
+    z-index: 2;
+}
+#chartAreaContainer {
+    display: grid;
+    grid-template-rows: 95% 5%;
+}
+#periodTitles{
+    display: grid;
+    border-top: 1px solid gray;
+}
+.periodTitle{
+    display:flex;
+    justify-content: center;
+    align-items: center;
+}
+#chartLegend {
+    font-size: 1.2em;
+}
+#chartLegend span {
+    display: block;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+.legendItem {
+    padding-left: 20px !important;
+}
+.chartPeriodBlock {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.periodBar {
+    display: flex;
+    justify-content: end;
+    flex-direction: column;
+    margin-left: 5%;
+    margin-right: 5%;
+}
+.barItem {
+    border-top: 1px solid #ffffff;
+    text-align: center;
+}
+.barItem span {
+    display: block;
+    padding-top: 5px;
+    color: rgb(73, 73, 73);
+}
+.periodExps {
+    background-color: rgb(243, 241, 237);
+}
+.periodIncs {
+    background-color: rgb(238, 240, 239);
+}
+.dx_hidden {
+    display: none;
+}
+#chart_details {
+    height: 400px;
+}

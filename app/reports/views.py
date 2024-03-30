@@ -1,5 +1,6 @@
 import calendar
 from datetime import date, datetime, timedelta
+from collections import defaultdict, OrderedDict
 
 from accounts.models import Account, AccountBalance
 from currencies.models import Currency
@@ -111,42 +112,58 @@ class MainView(TemplateView):
 
 
 class ReportDataView(View):
-    def _calculate_results(self, results, entries, group_by_parent, group_all):
+    def _create_group_string(self, entr, group_all):
+        if group_all:
+            return "Total"
+        month = entr.date.strftime("%m")
+        return f"{entr.date.year}.{month}"
+
+    def _create_acc_name(self, entr, group_by_parent):
+        if entr.acc_dr.results == Account.RESULT_EXPENSES:
+            if group_by_parent:
+                acc_name = f"{entr.acc_dr.parent.name}" if entr.acc_dr.parent else f"{entr.acc_dr.name}"
+            else:
+                acc_name = f"{entr.acc_dr.parent.name}:{entr.acc_dr.name}" if entr.acc_dr.parent else f"{entr.acc_dr.name}"
+        else:
+            acc_name = f"{entr.acc_cr.name}"
+        return acc_name
+
+    def _summarize_results(self, results, type_name, entries, group_by_parent, group_all):
         for entr in entries:
-            if group_all:
-                group_date = "Total"
+            group_date = self._create_group_string(entr, group_all)
+            acc_name = self._create_acc_name(entr, group_by_parent)
+            if group_dict := results.get(group_date, {}).get(type_name):
+                group_dict[acc_name] = group_dict.get(acc_name, 0) + entr.total
             else:
-                month = entr.date.strftime("%m")
-                group_date = f"{entr.date.year}.{month}"
-            if entr.acc_dr.results == Account.RESULT_EXPENSES:
-                if group_by_parent:
-                    acc_name = f"exp:{entr.acc_dr.parent.name}" if entr.acc_dr.parent else f"exp:{entr.acc_dr.name}"
-                else:
-                    acc_name = f"exp:{entr.acc_dr.parent.name}:{entr.acc_dr.name}" if entr.acc_dr.parent else f"exp:{entr.acc_dr.name}"
-            else:
-                acc_name = f"inc:{entr.acc_cr.name}"
-            if group_dict := next((item for item in results if item["group_date"] == group_date), None):
-                group_dict[acc_name] = entr.total + group_dict.get(acc_name, 0)
-            else:
-                results.append({"group_date": group_date, acc_name: entr.total})
+                new_value = OrderedDict()
+                new_value[acc_name] = entr.total
+                results[group_date][type_name] = new_value
 
-    def get_income_accounts(self, qs_inc):
-        return [f"inc:{acc}" for acc in set(qs_inc.values_list("acc_cr__name", flat=True))]
+    def _get_income_accounts(self, qs_inc):
+        return [f"{acc}" for acc in set(qs_inc.values_list("acc_cr__name", flat=True))]
 
-    def get_expenses_accounts(self, user, group_by_parent):
+    def _get_expenses_accounts(self, user, group_by_parent):
         return (
             [
-                f'exp:{acc["name"]}'
+                f'{acc["name"]}'
                 for acc in Account.objects.filter(results=Account.RESULT_EXPENSES, parent=None, user=user).order_by("order").values("name")
             ]
             if group_by_parent
             else [
-                f'exp:{acc["parent__name"]}:{acc["name"]}'
+                f'{acc["parent__name"]}:{acc["name"]}'
                 for acc in Account.objects.filter(results=Account.RESULT_EXPENSES, user=user).values("name", "parent__name").distinct()
             ]
         )
 
-    def get(self, request, *args, **kwargs):
+    def _get_max_value(self, results):
+        max_inc = 0
+        max_exp = 0
+        for item in results.values():
+            max_inc = max(sum(value for key, value in item.get("incs", {}).items()), max_inc)
+            max_exp = max(sum(value for key, value in item.get("exps", {}).items()), max_exp)
+        return max(max_inc, max_exp)
+
+    def get(self, request):
         today = datetime.now()
         group_by_parent = True
         group_all = request.GET.get("group_all") == "true"
@@ -170,7 +187,7 @@ class ReportDataView(View):
                 currency=currency,
             )
             .select_related("acc_dr", "acc_dr__parent")
-            .order_by("date")
+            .order_by("-acc_dr__parent__order")
         )
         qs_inc = (
             Entry.objects.filter(
@@ -181,19 +198,20 @@ class ReportDataView(View):
                 currency=currency,
             )
             .select_related("acc_cr", "acc_cr__parent")
-            .order_by("date")
+            .order_by("-acc_cr__order")
         )
-        results = []
-        self._calculate_results(results, qs_exp, group_by_parent, group_all)
-        self._calculate_results(results, qs_inc, group_by_parent, group_all)
-        inc_accounts = self.get_income_accounts(qs_inc)
-        exp_accounts = self.get_expenses_accounts(user, group_by_parent)
+        results = defaultdict(dict)
+        self._summarize_results(results, "exps", qs_exp, group_by_parent, group_all)
+        self._summarize_results(results, "incs", qs_inc, group_by_parent, group_all)
+        inc_accounts = self._get_income_accounts(qs_inc)
+        exp_accounts = self._get_expenses_accounts(user, group_by_parent)
         period_inc, period_exp, period_sum = get_period_results(period_from, period_to, user, currency)
         return JsonResponse(
             {
+                "max_value": self._get_max_value(results),
                 "accounts_incomes": inc_accounts,
                 "accounts_expenses": exp_accounts,
-                "results": sorted(results, key=lambda k: k["group_date"]),
+                "results": results,
                 "period_inc": period_inc,
                 "period_exp": period_exp,
                 "period_sum": period_sum,
