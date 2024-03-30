@@ -1,10 +1,10 @@
-$(function(){
+document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('acc_dr_visible').addEventListener("click", function(event) {
         event.preventDefault();
         document.getElementById('modal-account-list').style.display = "block";
         document.getElementById('modal-background').style.display = "block"
         document.getElementById('acc_type').value = 'dr';
-        $('body').css('overflow', 'hidden');
+        document.body.style.overflow = 'hidden';
     })
 
     document.getElementById('acc_cr_visible').addEventListener("click", function(event) {
@@ -12,13 +12,13 @@ $(function(){
         document.getElementById('modal-account-list').style.display = "block";
         document.getElementById('modal-background').style.display = 'block'
         document.getElementById('acc_type').value = 'cr';
-        $('body').css('overflow', 'hidden');
+        document.body.style.overflow = 'hidden';
     })
 
     document.getElementById('modal-background').addEventListener('click', function(event){
         document.getElementById('modal-background').style.display = 'none';
         document.getElementById('modal-account-list').style.display = 'none';
-        $('body').css('overflow', 'auto');
+        document.body.style.overflow = 'auto';
     })
 
     let accItems = document.getElementsByClassName('acc-item')
@@ -35,27 +35,29 @@ $(function(){
             }
             document.getElementById('modal-account-list').style.display = "none";
             document.getElementById('modal-background').style.display = 'none';
-            $('body').css('overflow', 'auto');
+            document.body.style.overflow = 'auto';
         })
     }
 
     let bookRows = document.getElementsByClassName('main-book-row')
     for(let i = 0; i < bookRows.length; i++) {
         bookRows[i].addEventListener("mouseenter", function(event) {
-            $('.' + event.target.classList[1]).each(function(ind, element) {
-                $(element).css('background-color', '#fafafa')
-            })
+            const els = document.getElementsByClassName(event.target.classList[1])
+            Array.from(els).forEach(function(element) {
+                element.style.backgroundColor = '#fafafa';
+            });
         })
         bookRows[i].addEventListener("mouseleave", function(event) {
-            $('.' + event.target.classList[1]).each(function(ind, element) {
-                $(element).css('background-color', 'white')
-            })
+            const els = document.getElementsByClassName(event.target.classList[1])
+            Array.from(els).forEach(function(element) {
+                element.style.backgroundColor = 'white';
+            });
         })
     }
 
-    $('#show-entries').click(function(event){
-        window.location.href =
-            location.protocol + '//' + location.host + location.pathname
-            + '?date-from=' + $('#date-from').val() + '&date-to=' + $('#date-to').val()
+    document.getElementById('show-entries').addEventListener('click', function(event) {
+        window.location.href = location.protocol + '//' + location.host + location.pathname
+            + '?date-from=' + document.getElementById('date-from').value + '&date-to=' + document.getElementById('date-to').value;
     });
+
 })
