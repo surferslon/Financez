@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 from accounts.forms import NewAccForm
 from accounts.models import Account, AccountBalance

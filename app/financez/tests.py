@@ -80,7 +80,7 @@ class ReportViewTests(TestCase):
             total=sum_exp2,
             currency=currency,
         )
-        response = self.client.get(reverse("report_data"))
+        response = self.client.get(reverse("reports:report_data"))
         results_by_parent = response.json()["results"][0]
         # expenses
         self.assertEqual(Decimal(str(results_by_parent["exp:expenses_parent"])), sum_exp1 + sum_exp2)

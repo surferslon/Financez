@@ -3,22 +3,16 @@
     background-color: white;
     border: 1px solid #e6e6e6
 }
-#chartBackground {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    z-index: 1;
-}
 #chart {
     display: grid;
-    grid-template-columns: 15% 85%;
+    grid-template-columns: 10% 90%;
     margin: 20px;
 }
 #chartArea {
     display: grid;
     background-color: none;
     z-index: 2;
+    padding-left: 50px;
 }
 #chartAreaContainer {
     display: grid;
@@ -33,6 +27,25 @@
     justify-content: center;
     align-items: center;
 }
+#chartBackground {
+    position: absolute;
+    display: flex;
+    flex-direction: column-reverse;
+    width: 100%;
+    z-index: 1;
+}
+.bgLine {
+    border-top: 1px solid #ccc;
+    display: flex;
+    align-items: end;
+    color: rgb(90, 90, 90);
+}
+.bgSubLine {
+    width: 100%;
+    border-top: 1px solid rgb(238, 238, 238);
+    height: 50%;
+}
+
 #chartLegend {
     font-size: 1.2em;
 }
@@ -44,6 +57,7 @@
 .legendItem {
     padding-left: 20px !important;
 }
+
 .chartPeriodBlock {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -55,24 +69,41 @@
     margin-left: 5%;
     margin-right: 5%;
 }
+
 .barItem {
-    border-top: 1px solid #ffffff;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top: 1px solid white;
 }
-.barItem span {
-    display: block;
+.barItem:hover {
+    background-color: rgb(229, 238, 237);
+}
+
+.barLabel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     padding-top: 5px;
-    color: rgb(73, 73, 73);
+    column-gap: 5px;
 }
+.barLabel span:first-child {
+    text-align: right;
+    color: #55666d;
+}
+.barLabel span:nth-child(2) {
+    text-align: left;
+    color: #585858;
+}
+
 .periodExps {
     background-color: rgb(243, 241, 237);
 }
 .periodIncs {
     background-color: rgb(238, 240, 239);
 }
-.dx_hidden {
-    display: none;
-}
 #chart_details {
     height: 400px;
+}
+#barDetails {
+    display: none;
 }

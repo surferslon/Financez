@@ -9,7 +9,7 @@ SECRET_KEY = "l@6boni%5$tg*dzta%6fellmleoum4g*p-1#q64g3hi-0&1@!n"
 # DEBUG = bool(os.environ['DEBUG'])
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "http://localhost:3000", "http://127.0.0.1:3000"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
 INSTALLED_APPS = [

@@ -32,6 +32,15 @@ class SettingsView(TemplateView):
         return context
 
 
+def change_field(request):
+    acc_pk = request.POST.get("acc_pk")
+    acc_field = request.POST.get("acc_field")
+    new_value = request.POST.get("value")
+    update_params = {acc_field: new_value}
+    Account.objects.filter(pk=acc_pk).update(**update_params)
+    return HttpResponse("")
+
+
 def change_currency(request):
     currency = Currency.objects.get(user=request.user, pk=request.POST.get("cur_pk"))
     currency.selected = True

@@ -4,13 +4,13 @@
 
 
 {% block scripts %}
-    <script src="{% static 'financez/reports.js' %}"></script>
+    <script src="{% static 'reports/index.js' %}"></script>
 {% endblock %}
 
 
 {% block extra_styles %}
-    <link rel="stylesheet" type="text/css" href="{% static 'financez/reports_index.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'financez/reports_chart.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'reports/index.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'reports/chart.css' %}">
 {% endblock %}
 
 
@@ -64,7 +64,7 @@
 
     </div>
 
-    <div id="chartContainer" data-url="{% url 'report_data' %}" data-details-url="{% url 'report_details' %}">
+    <div id="chartContainer" data-url="{% url 'reports:report_data' %}" data-details-url="{% url 'reports:report_details' %}">
         <div id="chart" style="height: 750px">
             <div id="chartLegend"></div>
             <div id="chartAreaContainer">
@@ -75,13 +75,11 @@
         </div>
     </div>
 
-    <div class="dx-viewport dx_hidden">
-        <div class="demo-container">
-            <div id="chart_details"></div>
-        </div>
+    <div id="barDetails">
+        <div id="chart_details"></div>
     </div>
 
-    <div class="report_block" id="report_entries" data-entries-url="{% url 'report_entries' %}">
+    <div class="report_block" id="report_entries" data-entries-url="{% url 'reports:report_entries' %}">
     </div>
 
 {% endblock %}
