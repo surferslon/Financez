@@ -126,7 +126,7 @@ class ChartDataAggregator:
             "max_value": self._get_max_value(self.results),
             "accounts_incomes": self.inc_accounts,
             "accounts_expenses": self.exp_accounts,
-            "results": self.results,
+            "results": dict(sorted(self.results.items())),
             "period_inc": self.period_inc,
             "period_exp": self.period_exp,
             "period_sum": self.period_sum,

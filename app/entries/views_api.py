@@ -1,10 +1,10 @@
 from datetime import date, datetime
 
-from entries.serializers import EntryCreateSerializer, EntrySerializer
-from django.views.generic import DetailView
-from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView
 from accounts.models import Currency
+from django.views.generic import DetailView
 from entries.models import Entry
+from entries.serializers import EntryCreateSerializer, EntrySerializer
+from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView
 
 
 class EntriesListView(ListAPIView):

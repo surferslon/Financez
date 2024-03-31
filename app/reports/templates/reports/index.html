@@ -23,7 +23,7 @@
                 <input id="period-from" name="period-from" type="date" value="{{ period_from }}">
                 <lbael> - </lbael>
                 <input id="period-to" name="period-to" type="date" value="{{ period_to }}">
-                <button id="update-report"> {% trans 'update' %} </button>
+                <button id="update-report"> {% trans 'Update' %} </button>
             </div>
             <div class="settings-row">
                 <input class="checkbx" type="checkbox" name="group_all" id="group_all">
@@ -68,9 +68,10 @@
         <div id="chart" style="height: 750px">
             <div id="chartLegend"></div>
             <div id="chartAreaContainer">
-                <div id="chartArea"> </div>
                 <div id="chartBackground"></div>
-                <div id="periodTitles"></div>
+                <div id="chartArea"> </div>
+                <div id="chartPeriodSums"></div>
+                <div id="chartPeriodTitles"></div>
             </div>
         </div>
     </div>
