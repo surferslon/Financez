@@ -11,6 +11,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
+DATE_FORMAT = "YYYY-MM-DD"
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -108,8 +109,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
-DATE_FORMAT = "Y n j"
 
 FIRST_DAY_OF_WEEK = 1
 

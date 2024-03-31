@@ -3,10 +3,11 @@ from datetime import date, datetime
 
 from accounts.forms import NewAccForm
 from accounts.models import Account, AccountBalance
+from accounts.utils import make_account_tree
 from currencies.models import Currency
 from django.db.models import F, Q, Sum
 from django.urls import reverse
-from django.views.generic import CreateView, DeleteView
+from django.views.generic import CreateView, DeleteView, TemplateView
 from entries.models import Entry
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
@@ -140,3 +141,19 @@ class ResultsView(APIView):
             )
 
         return Response(resp_dict)
+
+
+class ModalAccountsListView(TemplateView):
+    template_name = "entries/modal_accounts.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["result_types"] = {
+            "assets": Account.RESULT_ASSETS,
+            "debts": Account.RESULT_DEBTS,
+            "plans": Account.RESULT_PLANS,
+            "incomes": Account.RESULT_INCOMES,
+            "expenses": Account.RESULT_EXPENSES,
+        }
+        context["account_list"] = make_account_tree(self.request.user)
+        return context

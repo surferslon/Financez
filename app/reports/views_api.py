@@ -6,10 +6,10 @@ from currencies.models import Currency
 from django.db.models import F, Q, Sum
 from django.template.response import TemplateResponse
 from django.views import View
-from reports.services import ChartDataAggregator
 from entries.models import Entry
-from rest_framework.views import APIView
+from reports.services import ChartDataAggregator
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 
 class ReportDataView(APIView):

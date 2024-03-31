@@ -1,0 +1,35 @@
+#modal-edit-entry {
+    position: absolute;
+    top: 100px;
+    width: 600px;
+    height: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    background: white;
+    z-index: 5;
+    border-radius: 5px;
+}
+#modal-edit-entry form {
+    height: 90%
+}
+#modal-edit-entry .rowElements {
+    margin: 50px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 10px;
+}
+#modal-edit-entry #id_comment {
+    grid-column: span 2;
+}
+#modal-edit-entry .rowButton {
+    margin: 50px;
+    height: 50%;
+    display: flex;
+    align-items: end;
+    justify-content: right;
+}
+#modal-edit-entry .rowButton button {
+    width: 30%;
+}

@@ -10,19 +10,21 @@
 
 {% block extra_styles %}
     <link rel="stylesheet" type="text/css" href="{% static 'entries/index.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'entries/modal_account_list.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'entries/modal_edit_entry.css' %}">
 {% endblock %}
 
 
 {% block content %}
 
     <div class="row">
-        <form method="POST" class="new-entry-form">
+        <form method="POST" id="new-entry-form" action="{% url 'entries:create' %}" data-modal-url="{% url 'accounts:modal_accounts_list' %}">
             {% csrf_token %}
             {{ form.date }}
+            <input id="acc_dr_input" />
             {{ form.acc_dr }}
-            <input id="acc_dr_visible"/>
+            <input id="acc_cr_input" />
             {{ form.acc_cr }}
-            <input id="acc_cr_visible"/>
             {{ form.total }}
             {{ form.comment }}
             <button>{% trans 'Add' %}</button>
@@ -31,10 +33,9 @@
 
     <div class="row">
         <div class="main-book-settings">
-            <input id="date-from" name="date-from" type="date" value={{ date_from }}>
-            <lbael> - </lbael>
-            <input id="date-to" name="date-to" type="date" value={{ date_to }}>
-            <button id="show-entries"> {% trans 'show' %} </button>
+            <input id="date-from" name="dateFilter" type="date" value="{{ date_from }}" />
+            <label> - </label>
+            <input id="date-to" name="dateFilter" type="date" value="{{ date_to }}" />
         </div>
     </div>
 
@@ -49,47 +50,8 @@
     </div>
 
     <div class="row">
-        <div class="main-book">
-            {% for entry in entries %}
-                <div class="main-book-row {{ entry.date|date:'YMd' }}">
-                    <div class="main-book-item">{{ entry.date|date:"Y M d"  }}</div>
-                    <div class="main-book-item">{{ entry.acc_dr__name }}</div>
-                    <div class="main-book-item">{{ entry.acc_cr__name }}</div>
-                    <div class="main-book-item"
-                        style="text-align: right; {% if entry.acc_cr__results == 'inc' %} color: green; {% endif %}">
-                        {{ entry.total|floatformat:3 }}
-                    </div>
-                    <div class="main-book-item" style="padding-left: 10px">{{ entry.comment }}</div>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <div id="modal-account-list">
-        <div class="account-container">
-            <input id="acc_type" hidden />
-            <div class="acc-list-block" style="grid-area: a">
-                <label class="results-header"> {% trans 'Assets' %} </label>
-                <div> {% include 'accounts/account_list.html' with type=result_types.assets account_list=account_list padding=10 %} </div>
-            </div>
-            <div class="acc-list-block" style="grid-area: b; border-left: 1px solid #dbdbdb">
-                <label class="results-header"> {% trans 'Expenses' %} </label>
-                <div> {% include 'accounts/account_list.html' with type=result_types.expenses account_list=account_list padding=10 %} </div>
-            </div>
-            <div class="acc-list-block" style="grid-area: c">
-                <label class="results-header"> {% trans 'Plans' %} </label>
-                <div> {% include 'accounts/account_list.html' with type=result_types.plans account_list=account_list padding=10 %} </div>
-            </div>
-            <div class="acc-list-block" style="grid-area: d">
-                <label class="results-header"> {% trans 'Debts' %} </label>
-                <div> {% include 'accounts/account_list.html' with type=result_types.debts account_list=account_list padding=10 %} </div>
-            </div>
-            <div class="acc-list-block" style="grid-area: e">
-                <label class="results-header"> {% trans 'Incomes' %} </label>
-                <div> {% include 'accounts/account_list.html' with type=result_types.incomes account_list=account_list padding=10 %} </div>
-            </div>
-
-        </div>
+        <entries-list-component id="main-book" data-url-list="{% url 'entries:list' %}">
+        </entries-list-component>
     </div>
 
 {% endblock %}

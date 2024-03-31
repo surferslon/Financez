@@ -1,7 +1,8 @@
-from entries.models import Entry
+from collections import OrderedDict, defaultdict
+
 from accounts.models import Account
-from collections import defaultdict, OrderedDict
 from django.db.models import Sum
+from entries.models import Entry
 
 
 class ChartDataAggregator:

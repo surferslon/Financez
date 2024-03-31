@@ -69,9 +69,10 @@
                         </div>
                     </div>
                     <div class="settings-row">
-                        <div>
-                            <a href="{% url 'logout' %}">{% trans 'Log out' %}</a>
-                        </div>
+                        <form id="logout-form" method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit">{% translate "Log out" %}</button>
+                        </form>
                     </div>
                 </div>
             {% else %}

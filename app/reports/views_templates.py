@@ -1,8 +1,9 @@
-from django.views.generic import TemplateView
 from datetime import date, datetime
-from django.db.models import Q
-from currencies.models import Currency
+
 from accounts.models import Account, AccountBalance
+from currencies.models import Currency
+from django.db.models import Q
+from django.views.generic import TemplateView
 
 
 class MainView(TemplateView):
@@ -30,7 +31,6 @@ class MainView(TemplateView):
         today = datetime.now()
         context["period_from"] = date(today.year, 1, 1).strftime("%Y-%m-%d")
         context["period_to"] = today.strftime("%Y-%m-%d")
-        context["current_month"] = today
 
     def get_context_data(self, **kwargs):
         context = super(MainView, self).get_context_data(**kwargs)

@@ -1,0 +1,25 @@
+{% load i18n %}
+
+
+<div id="modal-edit-entry">
+    <form id="edit-entry-form">
+        {% csrf_token %}
+        <div class="rowElements">
+            <label>Date:</label>
+            <input type="date" name="date" value="{{ object.date|date:"Y-m-d" }}">
+            <label>Dr:</label>
+            <input id="acc_dr_input" value="{{ object.acc_dr.name }}">
+            <input type="hidden" name="acc_dr" id="acc_dr"  value="{{ object.acc_dr.id }}">
+            <label>Cr:</label>
+            <input id="acc_cr_input" value="{{ object.acc_cr.name }}"/>
+            <input type="hidden" name="acc_cr" id="acc_cr" value="{{ object.acc_cr.id }}">
+            <label>Total:</label>
+            <input name="total" value="{{ object.total }}">
+            <label>Comment:</label>
+            <input id="id_comment" name="comment" value="{{ object.comment }}">
+        </div>
+        <div class="rowButton">
+            <button type="submit" id="saveEntryBtn">{% trans 'Save' %}</button>
+        </div>
+    </form>
+</div>
