@@ -1,10 +1,10 @@
-FROM python:3.10
+FROM python:3.12
 
-ADD . /usr/app
+ADD ./app /usr/app
+ADD ./pyproject.toml /usr/app
 WORKDIR /usr/app
 
-FROM nginx:1.18-alpine
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY --from=build-step /build/build /usr/share/nginx/html
-
 RUN pip install poetry && poetry install
+RUN pip install gunicorn
+
+RUN poetry run python manage.py collectstatic --noinput
