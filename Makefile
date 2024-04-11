@@ -1,7 +1,7 @@
 run:
 	docker compose up
 
-run_build:
+build:
 	docker compose build
 	docker compose up
 
