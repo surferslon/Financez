@@ -2,5 +2,5 @@
 Accounting app
 
 ## Install
-`docker compose build` <br>
-`docker compose up`
+`make build` <br>
+`make run`
