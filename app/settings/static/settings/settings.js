@@ -1,74 +1,88 @@
-$(function() {
-    $('.acc-tree-item').change(function(event){
-        let elem = $(event.target)
-        let acc_pk = elem.parent().data('accpk')
-        let acc_field = elem.data('field')
-        $.ajax({
-            type: "POST",
-            url: $('#acc-list').data('url'),
-            data: {
-                acc_pk: acc_pk,
-                acc_field: acc_field,
-                value: elem.val(),
-                csrfmiddlewaretoken: document.getElementsByName('csrfmiddlewaretoken')[0].value
-            },
-            success: function(resp){
+function changeCurrency(event){
+    let cur_id = event.target.dataset.curid;
+    let {url} = document.querySelector('.currencies-list').dataset;
+    fetch(url, {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: new URLSearchParams({
+            cur_pk: cur_id
+        })
+    })
+    .then(resp => {
+        if (resp.status === 200) {
+            window.location.reload(true);
+        }
+        else {
+            console.error('Error:', resp.status);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.acc-tree-item').forEach(function(item) {
+        item.addEventListener('change', function(event) {
+            let elem = event.target;
+            let acc_pk = elem.parentElement.dataset.accpk;
+            let acc_field = elem.dataset.field;
+            fetch(document.querySelector('#acc-list').dataset.url, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: new URLSearchParams({
+                    acc_pk: acc_pk,
+                    acc_field: acc_field,
+                    value: elem.value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
                 if (['parent', 'results'].includes(acc_field)) {
                     window.location.reload(true);
                 }
-
-            },
-        })
-    })
-
-    $('.cur-button').click(function(event){
-        let cur_id = $(event.target).data('curid')
-        let url = $('.currencies-list').data('url')
-        $.ajax({
-            type: "POST",
-            url: url,
-            data: {
-                cur_pk: cur_id,
-                csrfmiddlewaretoken: document.getElementsByName('csrfmiddlewaretoken')[0].value
-            },
-            success: function(resp){
-                window.location.reload(true);
-
-            },
-        })
-    })
-
-    $('#language-selector').change(function(event){
-        $('#language-form').submit();
-    })
-
-    $('#new-acc-button').click(function(event) {
-        $('#modal-background').css('display', 'flex');
-        $('#modal-new-acc').css('display', 'block');
-        $('body').css('overflow', 'hidden');
-    })
-
-    $('#add-currency-button').click(function(event) {
-        event.preventDefault()
-        $('#modal-background').css('display', 'flex');
-        $('#modal-new-cur').css('display', 'block');
-        $('body').css('overflow', 'hidden');
-    })
-
-    $('.del-button').click(function(event) {
-        event.preventDefault()
-        $('#modal-background').css('display', 'flex');
-        $('#modal-del-acc').css('display', 'block');
-        $('#form-del-acc').attr('action', event.target.href)
-    })
-
-    $('#modal-background').click(function(event) {
-        $('#modal-background').css('display', 'none');
-        $('#modal-new-acc').css('display', 'none');
-        $('#modal-new-cur').css('display', 'none');
-        $('#modal-del-acc').css('display', 'none');
-        $('body').css('overflow', 'auto');
+            });
+        });
     });
 
+    document.querySelectorAll('.cur-button').forEach(function(button) {
+        button.addEventListener('click', event => changeCurrency(event));
+    });
 
-})
+    document.querySelector('#language-selector').addEventListener('change', function(event) {
+        document.querySelector('#language-form').submit();
+    });
+
+    document.querySelector('#new-acc-button').addEventListener('click', function(event) {
+        document.querySelector('#modal-background').style.display = 'flex';
+        document.querySelector('#modal-new-acc').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    });
+
+    document.querySelector('#add-currency-button').addEventListener('click', function(event) {
+        event.preventDefault();
+        document.querySelector('#modal-background').style.display = 'flex';
+        document.querySelector('#modal-new-cur').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    });
+
+    document.querySelectorAll('.del-button').forEach(function(button) {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+            document.querySelector('#modal-background').style.display = 'flex';
+            document.querySelector('#modal-del-acc').style.display = 'block';
+            document.querySelector('#form-del-acc').action = event.target.href;
+        });
+    });
+
+    document.querySelector('#modal-background').addEventListener('click', function(event) {
+        document.querySelector('#modal-background').style.display = 'none';
+        document.querySelector('#modal-new-acc').style.display = 'none';
+        document.querySelector('#modal-new-cur').style.display = 'none';
+        document.querySelector('#modal-del-acc').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    });
+});

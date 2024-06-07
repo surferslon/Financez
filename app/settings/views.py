@@ -3,7 +3,6 @@ from accounts.models import Account
 from accounts.utils import make_account_tree
 from currencies.forms import NewCurForm
 from currencies.models import Currency
-from django.http import HttpResponse
 from django.views.generic import TemplateView
 
 
@@ -30,19 +29,3 @@ class SettingsView(TemplateView):
             "expenses": Account.RESULT_EXPENSES,
         }
         return context
-
-
-def change_field(request):
-    acc_pk = request.POST.get("acc_pk")
-    acc_field = request.POST.get("acc_field")
-    new_value = request.POST.get("value")
-    update_params = {acc_field: new_value}
-    Account.objects.filter(pk=acc_pk).update(**update_params)
-    return HttpResponse("")
-
-
-def change_currency(request):
-    currency = Currency.objects.get(user=request.user, pk=request.POST.get("cur_pk"))
-    currency.selected = True
-    currency.save()
-    return HttpResponse("")
