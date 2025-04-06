@@ -118,6 +118,22 @@
     padding: 20px;
     right: 100%;
     z-index: 10;
+    text-align: right;
+    white-space: nowrap;
+}
+.barTooltip table {
+    border-collapse: collapse;
+    margin-bottom: 0;
+}
+.barTooltip table td{
+    padding: 0 5px;
+}
+.barTooltip a {
+    cursor: pointer;
+    color: white
+}
+.barTooltip a:hover{
+    color: rgb(219, 233, 246);
 }
 .periodExps {
     background-color: rgb(243, 241, 237);

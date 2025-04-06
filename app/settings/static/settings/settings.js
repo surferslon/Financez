@@ -21,7 +21,36 @@ function changeCurrency(event){
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+
+function changeSection(section){
+    document.querySelectorAll('.set-menu-item').forEach(item => {
+        if (item.id === `menu-${section}`) {
+            item.classList.add('set-menu-item-active');
+        }
+        else {
+            item.classList.remove('set-menu-item-active');
+        }
+    })
+    if (section === 'general') {
+        document.querySelector('#general-settings').style.display = 'block';
+        document.querySelector('#account-settings').style.display = 'none';
+    }
+    else {
+        document.querySelector('#general-settings').style.display = 'none';
+        document.querySelector('#account-settings').style.display = 'block';
+    }
+}
+
+
+function assignListeners() {
+    document.querySelectorAll('.set-menu-item').forEach(item => {
+        item.addEventListener('click', event => {
+            event.preventDefault();
+            const section = item.id.replace('menu-', '');
+            changeSection(section);
+        });
+    });
+
     document.querySelectorAll('.acc-tree-item').forEach(function(item) {
         item.addEventListener('change', function(event) {
             let elem = event.target;
@@ -85,4 +114,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('#modal-del-acc').style.display = 'none';
         document.body.style.overflow = 'auto';
     });
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    changeSection('general');
+    assignListeners();
 });

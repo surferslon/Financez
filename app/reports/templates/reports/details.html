@@ -1,0 +1,18 @@
+<table>
+    {% for item in results %}
+        <tr>
+            <td>
+                <a onclick="detailsOnClick(event)" data-accid="{{item.acc_id}}" data-period="{{period}}" data-url="{% url 'reports:report_entries' %}">
+                    {{ item.acc_name }}
+                </a>
+            </td>
+            <td> {{ item.total_sum|floatformat:2 }} </td>
+        </tr>
+    {% endfor %}
+    <tr>
+        <td></td>
+        <td>{{ total|floatformat:2 }}</td>
+    </tr>
+</table>
+
+</div>

@@ -26,9 +26,14 @@ select {
     padding: 20px;
     border-bottom: 1px solid #dbdbdb;
     border-left: 1px solid #dbdbdb;
+    cursor: pointer;
 }
 .set-menu-item:hover {
     border-left: 1px solid gray;
+}
+.set-menu-item-active {
+    border-left: 1px solid gray;
+    font-weight: bold;
 }
 .acc-tree {
     margin-bottom: 20px;
@@ -59,9 +64,6 @@ select {
     display: none;
 }
 
-.settings-block {
-
-}
 .settings-row{
     padding: 20px;
     display: grid;
